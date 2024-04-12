@@ -532,7 +532,6 @@ public:
 		this->addChild(cclcol);
 		auto actionCol = CCFadeTo::create(0.1f, 75);
 		cclcol->runAction(actionCol);
-		auto addingLayer = CCLayer::create();
 
 		auto touchDispatcher = CCDirector::sharedDirector()->m_pTouchDispatcher;
 		touchDispatcher->incrementForcePrio();

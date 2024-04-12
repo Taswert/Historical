@@ -9,9 +9,6 @@ namespace LevelInfoLayer
 	//inline void(__thiscall* LevelInfoLayer_onLevelInfo)(cocos2d::CCLayer* levelInfoLayer);
 	//void __fastcall LevelInfoLayer_onLevelInfo_hook(cocos2d::CCLayer* levelInfoLayer);
 
-	
-	
-	
 
 	class Callback
 	{

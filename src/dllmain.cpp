@@ -6,6 +6,9 @@
 #include "EditLevelLayer.h"
 #include "InfoLayer.h"
 #include "CreatorLayer.h"
+#include "EditorUI.h"
+#include "CustomizeObjectLayer.h"
+#include "MyCustomizeObjectLayer.h"
 
 #include <imgui-hook.hpp>
 #include <imgui.h>
@@ -53,6 +56,7 @@ gd::EditorUI* editUI;
 std::string savedClipboard;
 
 DWORD cocosbase = (DWORD)GetModuleHandleA("libcocos2d.dll");
+
 void drawRect(CCDrawNode* drawer, CCRect const& rect, ccColor4F col) {
     constexpr size_t N = 4;
     CCPoint vert[N];
@@ -1043,22 +1047,58 @@ bool __fastcall EditorUI_init_H(gd::EditorUI* self, void*, CCLayer* editor) {
     editUI = self;
     bool result = EditorUI_init(self, editor);
 
+    auto pashalkoSprite = CCSprite::createWithSpriteFrameName("secretCoinUI_001.png");
+    auto pashalkoBtn = gd::CCMenuItemSpriteExtra::create(pashalkoSprite, nullptr, self, menu_selector(MyCustomizeObjectLayer::onPashalko));
+    pashalkoBtn->setPosition({ 0, 0});
+    auto pashalkoMenu = CCMenu::create( );
+    pashalkoMenu->setPosition({ CCDirector::sharedDirector( )->getScreenRight( )-140.f, CCDirector::sharedDirector( )->getScreenTop( )-80.f });
+    pashalkoMenu->addChild(pashalkoBtn);
+    self->addChild(pashalkoMenu);
+
+    auto leftiestLayerSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+    leftiestLayerSprite->setScale(0.5f);
+    auto leftiestLayerButton = gd::CCMenuItemSpriteExtra::create(leftiestLayerSprite, nullptr, self, menu_selector(EditorUI::Callback::toTheFirstLayerButton));
+    leftiestLayerButton->setPosition({ -42.f, 0 });
+    leftiestLayerButton->setOpacity(200);
+
+    auto rightiestLayerSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+    rightiestLayerSprite->setScale(0.5f);
+    rightiestLayerSprite->setFlipX(true);
+    auto rightiestLayerButton = gd::CCMenuItemSpriteExtra::create(rightiestLayerSprite, nullptr, self, menu_selector(EditorUI::Callback::toTheEmptyLayerButton));
+    rightiestLayerButton->setPosition({ 42.f, 0 });
+    rightiestLayerButton->setOpacity(200);
+
+    auto arrowMenu = CCMenu::create();
+    arrowMenu->setPosition({ CCDirector::sharedDirector()->getScreenRight() - 50.f, CCDirector::sharedDirector()->getScreenTop() - 192.f });
+    arrowMenu->addChild(rightiestLayerButton);
+    arrowMenu->addChild(leftiestLayerButton);
+    arrowMenu->setZOrder(10);
+
+    self->addChild(arrowMenu);
+
     if (setting().onDebugLabels)
     {
         auto editorlbl = CCLabelBMFont::create("", "chatFont.fnt");
-        editorlbl->setString(CCString::createWithFormat("editor pointer: %p", self)->getCString());
+        editorlbl->setString(CCString::createWithFormat("EditorUI pointer: %p", self)->getCString());
         editorlbl->setAnchorPoint({ 1.f, 0.5f });
-        editorlbl->setPosition(CCDirector::sharedDirector()->getScreenRight() - 120, 130);
+        editorlbl->setPosition(CCDirector::sharedDirector()->getScreenRight() - 120, 140);
         editorlbl->setScale(0.5f);
         self->addChild(editorlbl);
 
         auto lvllbl = CCLabelBMFont::create("", "chatFont.fnt");
-        lvllbl->setString(CCString::createWithFormat("lvl pointer: %p", self->getLevelEditorLayer())->getCString());
+        lvllbl->setString(CCString::createWithFormat("LevelEditorLayer pointer: %p", self->getLevelEditorLayer())->getCString());
         lvllbl->setAnchorPoint({ 1.f, 0.5f });
-        lvllbl->setPosition(CCDirector::sharedDirector()->getScreenRight() - 120, 120);
+        lvllbl->setPosition(CCDirector::sharedDirector()->getScreenRight() - 120, 130);
         lvllbl->setScale(0.5f);
         lvllbl->setTag(4571);
         self->addChild(lvllbl);
+
+        auto mngrlbl = CCLabelBMFont::create("", "chatFont.fnt");
+        mngrlbl->setString(CCString::createWithFormat("GameManager pointer: %p", gd::GameManager::sharedState())->getCString());
+        mngrlbl->setAnchorPoint({ 1.f, 0.5f });
+        mngrlbl->setPosition(CCDirector::sharedDirector()->getScreenRight() - 120, 120);
+        mngrlbl->setScale(0.5f);
+        self->addChild(mngrlbl);
     }
 
     if (setting().onSelectedObjectLabel)
@@ -1109,35 +1149,40 @@ bool __fastcall EditorUI_init_H(gd::EditorUI* self, void*, CCLayer* editor) {
             self->updateButtons();
         }
     }
+
     return result;
 }
 
 
-class CustomizeObjectLayer : public gd::FLAlertLayer
-{
-public:
-    void hightlightSelected(gd::ButtonSprite* spr) {
-        reinterpret_cast<void(__thiscall*)(CustomizeObjectLayer*, gd::ButtonSprite*)>(gd::base + 0x2e4c0)(this, spr);
-    }
-};
 
-bool(__thiscall* CustomizeObjectLayer_init)(CustomizeObjectLayer* self, gd::GameObject* obj, CCArray* objs);
-bool __fastcall CustomizeObjectLayer_init_H(CustomizeObjectLayer* self, void* edx, gd::GameObject* obj, CCArray* objs) {
-    if (!CustomizeObjectLayer_init(self, obj, objs)) return false;
 
-    auto sprite = gd::ButtonSprite::create("3DL", 250, 0, 0.4, false, "bigFont.fnt", "GJ_button_04.png", 25.0);
-    auto button = gd::CCMenuItemSpriteExtra::create(sprite, nullptr, self, union_cast<SEL_MenuHandler>(gd::base + 0x2e390));
-    button->setTag(8);
-    button->setPosition(100, 0);
-    from<CCArray*>(self, 0x1c4)->addObject(sprite);
-    self->getMenu()->addChild(button);
-
-    if (obj && obj->getColorMode() == 8) {
-        self->hightlightSelected(sprite);
-    }
-
-    return true;
-}
+//bool(__thiscall* CustomizeObjectLayer_init)(CustomizeObjectLayer* self, gd::GameObject* obj, CCArray* objs);
+//bool __fastcall CustomizeObjectLayer_init_H(CustomizeObjectLayer* self, void* edx, gd::GameObject* obj, CCArray* objs) {
+//    if (!CustomizeObjectLayer_init(self, obj, objs)) return false;
+//
+//    auto sprite = gd::ButtonSprite::create("3DL", 250, 0, 0.4, false, "bigFont.fnt", "GJ_button_04.png", 25.0);
+//    auto button = gd::CCMenuItemSpriteExtra::create(sprite, nullptr, self, union_cast<SEL_MenuHandler>(gd::base + 0x2e390));
+//    button->setTag(8);
+//    button->setPosition(100, 0);
+//    from<CCArray*>(self, 0x1c4)->addObject(sprite);
+//    self->getMenu()->addChild(button);
+//
+//    auto colorBtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
+//    auto colorBtn = gd::CCMenuItemSpriteExtra::create(colorBtnSprite, nullptr, self, nullptr);
+//    auto selectSprite = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
+//
+//    colorBtn->setPosition({ -50.f, 0.f });
+//    selectSprite->setPosition({ -50.f, 0.f });
+//
+//    self->getMenu()->addChild(colorBtn);
+//    self->getMenu()->addChild(selectSprite);
+//
+//    if (obj && obj->getColorMode() == 8) {
+//        self->hightlightSelected(sprite);
+//    }
+//
+//    return true;
+//}
 
 //bool(__thiscall* EditorUI_selectObject)(gd::EditorUI* self, gd::GameObject* obj);
 //void __fastcall EditorUI_selectObject_H(gd::EditorUI* self, void* edx, gd::GameObject* obj)
@@ -1225,7 +1270,7 @@ void __fastcall Scheduler_update_H(CCScheduler* self, void* edx, float idk) {
         }
         if (lvllbl)
         {
-            reinterpret_cast<CCLabelBMFont*>(lvllbl)->setString(CCString::createWithFormat("lvl pointer: %p", editUI->getLevelEditorLayer())->getCString());
+            reinterpret_cast<CCLabelBMFont*>(lvllbl)->setString(CCString::createWithFormat("LevelEditorLayer pointer: %p", editUI->getLevelEditorLayer())->getCString());
         }
         if (selobjplbl)
         {
@@ -1387,8 +1432,10 @@ DWORD WINAPI thread_func(void* hModule) {
         reinterpret_cast<void*>(&PlayLayer_destroyPlayer_H),
         reinterpret_cast<void**>(&PlayLayer_destroyPlayer));
 
+
     //AllocConsole();
     //freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
+
     /*MH_CreateHook(
         reinterpret_cast<void*>(gd::base + 0x44864),
         reinterpret_cast<void*>(&GraphicsSettingsApply_H),
@@ -1518,10 +1565,15 @@ DWORD WINAPI thread_func(void* hModule) {
         reinterpret_cast<void*>(gd::base + 0x3f9d0),
         reinterpret_cast<void**>(&EditorUI_dtor_H),
         reinterpret_cast<void**>(&EditorUI_dtor));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x2da00),
-        reinterpret_cast<void**>(&CustomizeObjectLayer_init_H),
-        reinterpret_cast<void**>(&CustomizeObjectLayer_init));
+    //MH_CreateHook(
+    //    reinterpret_cast< void * >(gd::base + 0x2d950),
+    //    CustomizeObjectLayer::create_H,
+    //    reinterpret_cast< void ** >(&CustomizeObjectLayer::create));
+
+    //MH_CreateHook(
+    //    reinterpret_cast<void*>(gd::base + 0x2da00),
+    //    CustomizeObjectLayer::CustomizeObjectLayer_init_H,
+    //    reinterpret_cast<void**>(&CustomizeObjectLayer::CustomizeObjectLayer_init));
 
     //MH_CreateHook(
     //    reinterpret_cast<void*>(gd::base + 0x47df0),
