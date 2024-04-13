@@ -887,7 +887,7 @@ public:
         else gd::FLAlertLayer::create(nullptr, "Something went wrong...", "You have no internet connection or servers are down.", "Ok", nullptr, 300.f, false, 0)->show();
         std::cout << "ADMIN CHECK PROTOCOL" << std::endl;
         std::cout << readBuffer << std::endl;
-        std::cout << udid << " - User device id" << std::endl << std::endl;
+        //std::cout << udid << " - User device id" << std::endl << std::endl;
         readBuffer.clear();
     }
 };
@@ -920,9 +920,9 @@ void adminInitCheck()
     else if (readBuffer == "4") setting().roleType = 4;
     else if (readBuffer == "-1") setting().roleType = 0;
     std::cout << "ADMIN INIT CHECK PROTOCOL" << std::endl;
-    std::cout << postfield << std::endl;
+    //std::cout << postfield << std::endl;
     std::cout << readBuffer << std::endl;
-    std::cout << udid << " - User device id" << std::endl << std::endl;
+    //std::cout << udid << " - User device id" << std::endl << std::endl;
 
 
     readBuffer.clear();
@@ -1047,13 +1047,15 @@ bool __fastcall EditorUI_init_H(gd::EditorUI* self, void*, CCLayer* editor) {
     editUI = self;
     bool result = EditorUI_init(self, editor);
 
-    auto pashalkoSprite = CCSprite::createWithSpriteFrameName("secretCoinUI_001.png");
-    auto pashalkoBtn = gd::CCMenuItemSpriteExtra::create(pashalkoSprite, nullptr, self, menu_selector(MyCustomizeObjectLayer::onPashalko));
-    pashalkoBtn->setPosition({ 0, 0});
-    auto pashalkoMenu = CCMenu::create( );
-    pashalkoMenu->setPosition({ CCDirector::sharedDirector( )->getScreenRight( )-140.f, CCDirector::sharedDirector( )->getScreenTop( )-80.f });
-    pashalkoMenu->addChild(pashalkoBtn);
-    self->addChild(pashalkoMenu);
+    auto editSprite = CCSprite::createWithSpriteFrameName("GJ_editObjBtn_001.png");
+    editUI->getEditObjectButton( )->setVisible(0);
+    editSprite->setScale(0.85f);
+    auto editBtn = gd::CCMenuItemSpriteExtra::create(editSprite, nullptr, self, menu_selector(MyCustomizeObjectLayer::onEdit));
+    editBtn->setPosition({ -7.865f, -87.865f });
+    editBtn->setTag(4580);
+    auto editMenu = from<CCMenu *>(editUI->getEditObjectButton( ), 0xAC);
+    editMenu->addChild(editBtn);
+    self->addChild(editMenu);
 
     auto leftiestLayerSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
     leftiestLayerSprite->setScale(0.5f);
@@ -1133,14 +1135,23 @@ bool __fastcall EditorUI_init_H(gd::EditorUI* self, void*, CCLayer* editor) {
         selobjidlbl->setScale(0.66f);
         self->addChild(selobjidlbl);
 
-        auto selobjtype = CCLabelBMFont::create("", "chatFont.fnt");
-        selobjtype->setString(CCString::createWithFormat("Type: %d", 0)->getCString());
-        selobjtype->setVisible(0);
-        selobjtype->setTag(4574);
-        selobjtype->setAnchorPoint({ 1.f, 0.5f });
-        selobjtype->setPosition(150, CCDirector::sharedDirector()->getScreenTop() - 90);
-        selobjtype->setScale(0.66f);
-        self->addChild(selobjtype);
+        auto selobjcol = CCLabelBMFont::create("", "chatFont.fnt");
+        selobjcol->setString(CCString::createWithFormat("ColID: %d", 0)->getCString());
+        selobjcol->setVisible(0);
+        selobjcol->setTag(4574);
+        selobjcol->setAnchorPoint({ 1.f, 0.5f });
+        selobjcol->setPosition(150, CCDirector::sharedDirector()->getScreenTop() - 90);
+        selobjcol->setScale(0.66f);
+        self->addChild(selobjcol);
+
+        auto selobjgroup = CCLabelBMFont::create("", "chatFont.fnt");
+        selobjgroup->setString(CCString::createWithFormat("Group: %d", 0)->getCString( ));
+        selobjgroup->setVisible(0);
+        selobjgroup->setTag(4575);
+        selobjgroup->setAnchorPoint({ 1.f, 0.5f });
+        selobjgroup->setPosition(150, CCDirector::sharedDirector( )->getScreenTop( )-100);
+        selobjgroup->setScale(0.66f);
+        self->addChild(selobjgroup);
     }
     if (setting().onPersistentClipboard)
     {
@@ -1243,16 +1254,43 @@ void __fastcall Scheduler_update_H(CCScheduler* self, void* edx, float idk) {
         auto lvllbl = editUI->getChildByTag(4571);
         auto selobjplbl = editUI->getChildByTag(4572);
         auto selobjidlbl = editUI->getChildByTag(4573);
-        //auto selobjtype = editUI->getChildByTag(4574);
+        auto selobjcollbl = editUI->getChildByTag(4574);
+        auto selobjgroup = editUI->getChildByTag(4575);
 
-        //if (selobjtype) {
-        //    if (editUI->getSingleSelectedObj() == 0) selobjtype->setVisible(0);
-        //    else
-        //    {
-        //        reinterpret_cast<CCLabelBMFont*>(selobjtype)->setString(CCString::createWithFormat("Type: %d", editUI->getSingleSelectedObj()->getType())->getCString());
-        //        selobjtype->setVisible(1);
-        //    }
-        //}
+        auto editMenu = from<CCMenu *>(editUI->getEditObjectButton( ), 0xAC);
+        auto editBtn = reinterpret_cast<gd::CCMenuItemSpriteExtra *>(editMenu->getChildByTag(4580));
+
+        if ( editBtn ) {
+            if ( !from<bool>(editUI->getEditObjectButton( ), 0x11c) && !setting().anyEdit || 
+                editUI->getSelectedObjectsOfCCArray( )->count( )==0 && setting( ).anyEdit ) {
+                editBtn->setOpacity(175);
+                editBtn->setColor({150, 150, 150});
+                editBtn->setEnabled(false);
+            }
+            else {
+                editBtn->setOpacity(255);
+                editBtn->setColor({ 255, 255, 255 });
+                editBtn->setEnabled(true);
+            }
+        }
+
+
+        if ( selobjgroup ) {
+            if ( editUI->getSingleSelectedObj( )==0 ) selobjgroup->setVisible(0);
+            else
+            {
+                reinterpret_cast< CCLabelBMFont * >(selobjgroup)->setString(CCString::createWithFormat("Group: %d", editUI->getSingleSelectedObj( )->getGroup())->getCString( ));
+                selobjgroup->setVisible(1);
+            }
+        }
+        if (selobjcollbl) {
+            if (editUI->getSingleSelectedObj() == 0) selobjcollbl->setVisible(0);
+            else
+            {
+                reinterpret_cast<CCLabelBMFont*>(selobjcollbl)->setString(CCString::createWithFormat("ColID: %d", editUI->getSingleSelectedObj()->getActiveColor())->getCString());
+                selobjcollbl->setVisible(1);
+            }
+        }
         if (selobjidlbl)
         {
             if (editUI->getSingleSelectedObj() == 0) selobjidlbl->setVisible(0);
@@ -1406,6 +1444,46 @@ void __fastcall ObjectToolboxAdd_TriggerTab_H() {
     ObjectToolboxAdd_TriggerTab();
 }
 
+int*(__thiscall *EditorColorSetter)(gd::GameObject *obj, ccColor4B col );
+void __fastcall EditorColorSetter_H(gd::GameObject* obj, void* edx, ccColor4B col) {
+    int* a = EditorColorSetter(obj, col);
+
+    switch ( obj->getActiveColor( ) ) {
+    case 1://p1 -
+        *a = 0x0AFF96AF;
+        break;
+    case 2://p2 -
+        *a = 0x0A9696FF;
+        break;
+    case 3://c1 -
+        *a = 0x0AFF96FF;
+        break;
+    case 4://c2 -
+        *a = 0x0A96FFFF;
+        break;
+    case 5://lbg -
+        *a = 0x0AFFAF4B;
+        break;
+    case 6://c3 -
+        *a = 0x0AFFFF96;
+        break;
+    case 7://c4 -
+        *a = 0x0A96FF96;
+        break;
+    case 8://3dl -
+        *a = 0x0A00FFFF;
+        break;
+    default:
+        *a = 0x0AFFFFFF;
+    }
+    if ( obj->isInvisible() ) {
+        *a = 0x0A007FFF;
+    }
+
+
+    //*a = 0x0A0000D1;
+}
+
 DWORD WINAPI thread_func(void* hModule) {
     WriteProcessMemory(GetCurrentProcess(), reinterpret_cast<void*>(gd::base + 0x3A21B), "\xB8\x01\x00\x00\x00\x90\x90", 7, NULL);
 
@@ -1433,8 +1511,8 @@ DWORD WINAPI thread_func(void* hModule) {
         reinterpret_cast<void**>(&PlayLayer_destroyPlayer));
 
 
-    //AllocConsole();
-    //freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
+    AllocConsole();
+    freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
 
     /*MH_CreateHook(
         reinterpret_cast<void*>(gd::base + 0x44864),
@@ -1449,6 +1527,10 @@ DWORD WINAPI thread_func(void* hModule) {
         reinterpret_cast<void*>(gd::base + 0x2cc30),
         CreatorLayer::CreatorLayer_init_H,
         reinterpret_cast<void**>(&CreatorLayer::CreatorLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base + 0x74f60),
+        reinterpret_cast< void * >(&EditorColorSetter_H),
+        reinterpret_cast< void ** >(&EditorColorSetter));
     MH_CreateHook(
         reinterpret_cast<void*>(gd::base + 0x44864),
         reinterpret_cast<void*>(&ObjectToolboxAdd_RampTab_H),

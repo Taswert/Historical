@@ -145,7 +145,7 @@ void RenderMain() {
         }
         if (ImGui::Begin("Settings", nullptr))
         {
-            ImGui::SetWindowPos({ 712, 539 });
+            ImGui::SetWindowPos({ 712, 569 });
             ImGui::EndTabItem();
         }
         if (ImGui::Begin("Status", nullptr))
@@ -1569,7 +1569,7 @@ void RenderMain() {
                     WriteProcessMemory(GetCurrentProcess(), reinterpret_cast<void*>(0x490f94), "\x72\x79", 2, NULL);
                 }
             }
-            if (ImGui::Checkbox("Zoom Bypass", &setting().onZoomBypass))
+            if (ImGui::Checkbox("Zoom Bypass", &setting().onZoomBypass)) //Допилить
             {
                 if (setting().onZoomBypass)
                 {
@@ -1673,6 +1673,7 @@ void RenderMain() {
             }
             ImGui::Checkbox("Persistent Clipboard", &setting().onPersistentClipboard);
             ImGui::Checkbox("Selected Object Info", &setting().onSelectedObjectLabel);
+            ImGui::Checkbox("Any Edit", &setting( ).anyEdit);
 
             /*if (ImGui::Checkbox("No Death X", &setting().onNoDeathX))
             {

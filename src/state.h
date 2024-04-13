@@ -98,6 +98,7 @@ struct SettingStruct {
     bool onStartPosSwitcher = false;
     bool onNoclipDeaths = false;
     bool onClkTimer = false;
+    bool anyEdit = false;
 
     bool onDebugLabels = false;
 
