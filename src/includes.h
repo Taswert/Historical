@@ -14,6 +14,8 @@
 #include <GUI/CCControlExtension/CCScale9Sprite.h>
 #include <spine/extension.h>
 #include <GUI/CCControlExtension/CCControlUtils.h>
+#include <GUI/CCControlExtension/CCControlColourPicker.h>
+#include <GUI/CCControlExtension/CCControl.h>
 using std::uintptr_t;
 
 // pretty everything in cocos2d starts with CC, so there is a low chance of collisions

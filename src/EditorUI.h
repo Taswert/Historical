@@ -9,5 +9,7 @@ namespace EditorUI
 	public:
 		void toTheFirstLayerButton(CCObject* obj);
 		void toTheEmptyLayerButton(CCObject* obj);
+		void onDuplicate(CCObject *obj);
+		void onDebugCopyObjAddress(CCObject *obj);
 	};
 }

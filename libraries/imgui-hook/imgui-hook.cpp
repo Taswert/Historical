@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <cocos2d.h>
 #include "imgui-hook.hpp"
+#include "state.h"
 
 using namespace cocos2d;
 
@@ -124,6 +125,30 @@ void __fastcall CCEGLView_pollEvents_H(CCEGLView* self) {
     CCEGLView_pollEvents(self);
 }
 
+void(__thiscall* CCEGLView_toggleFullScreen)(cocos2d::CCEGLView*, bool);
+void __fastcall CCEGLView_toggleFullScreen_H(cocos2d::CCEGLView* self, void*, bool toggle) {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
+    CCEGLView_toggleFullScreen(self, toggle);
+
+    
+
+    g_inited = false;
+    // ImGui::CreateContext();
+    // ImGui::GetIO();
+    // auto hwnd = windowToHWND(self->getWindow());
+    // ImGui_ImplWin32_Init(hwnd);
+    // ImGui_ImplOpenGL3_Init();
+}
+
+//void(__thiscall* fpMainLoop)(cocos2d::CCDirector* self);
+//void __fastcall hkMainLoop(cocos2d::CCDirector* self, void* edx) {
+//    CCEGLView_pollEvents(self->getOpenGLView());
+//    fpMainLoop(self);
+//}
+
 void ImGuiHook::setupHooks(std::function<void(void*, void*, void**)> hookFunc) {
     auto cocosBase = GetModuleHandleA("libcocos2d.dll");
     hookFunc(
@@ -136,4 +161,14 @@ void ImGuiHook::setupHooks(std::function<void(void*, void*, void**)> hookFunc) {
         CCEGLView_pollEvents_H,
         reinterpret_cast<void**>(&CCEGLView_pollEvents)
     );
+    hookFunc(
+        reinterpret_cast<void*>(GetProcAddress(cocosBase, "?toggleFullScreen@CCEGLView@cocos2d@@QAEX_N@Z")),
+        reinterpret_cast<void*>(&CCEGLView_toggleFullScreen_H),
+        reinterpret_cast<void**>(&CCEGLView_toggleFullScreen)
+    );
+    //hookFunc(
+    //    reinterpret_cast<LPVOID>(reinterpret_cast<uintptr_t>(cocosBase) + 0xfc510),
+    //    hkMainLoop,
+    //    reinterpret_cast<LPVOID*>(&fpMainLoop)
+    //);
 }

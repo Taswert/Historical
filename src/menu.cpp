@@ -15,6 +15,8 @@
 #include "utils.hpp"
 #include <chrono>
 #include <audio_nodes/FMODAudioEngine.h>
+
+#include "explorer.hpp"
 using namespace cocos2d;
 
 bool show = false;
@@ -53,6 +55,63 @@ void Fps(int FPS)
     CCDirector::sharedDirector()->setAnimationInterval(1.0 / 240);
 }
 */
+void colorSet( ) {
+    auto *colors = ImGui::GetStyle( ).Colors;
+
+    color1.x = setting( ).Overlaycolor [ 0 ];
+    color1.y = setting( ).Overlaycolor [ 1 ];
+    color1.z = setting( ).Overlaycolor [ 2 ];
+    color1.w = setting( ).Overlaycolor [ 3 ]-0.4;
+
+    color2.x = setting( ).Overlaycolor [ 0 ];
+    color2.y = setting( ).Overlaycolor [ 1 ];
+    color2.z = setting( ).Overlaycolor [ 2 ];
+    color2.w = 1;
+
+    color3.x = setting( ).Overlaycolor [ 0 ]+0.3;
+    color3.y = setting( ).Overlaycolor [ 1 ]+0.3;
+    color3.z = setting( ).Overlaycolor [ 2 ]+0.3;
+    color3.w = setting( ).Overlaycolor [ 3 ]+0.3;
+
+    color4.x = setting( ).Overlaycolor [ 0 ]-0.1;
+    color4.y = setting( ).Overlaycolor [ 1 ]-0.1;
+    color4.z = setting( ).Overlaycolor [ 2 ]-0.1;
+    color4.w = setting( ).Overlaycolor [ 3 ]-0.1;
+
+    color5.x = setting( ).Overlaycolor [ 0 ]+0.1;
+    color5.y = setting( ).Overlaycolor [ 1 ]+0.1;
+    color5.z = setting( ).Overlaycolor [ 2 ]+0.1;
+    color5.w = setting( ).Overlaycolor [ 3 ]+0.1;
+
+    color6.x = setting( ).BGcolor [ 0 ];
+    color6.y = setting( ).BGcolor [ 1 ];
+    color6.z = setting( ).BGcolor [ 2 ];
+    color6.w = setting( ).BGcolor [ 3 ];
+
+    //colors[ImGuiCol_Text] = ImVec4(1, 0, 0, 1);
+    colors [ ImGuiCol_WindowBg ] = color6;
+    colors [ ImGuiCol_Border ] = color2;
+    colors [ ImGuiCol_BorderShadow ] = color2;
+    colors [ ImGuiCol_Button ] = color3;
+    colors [ ImGuiCol_ButtonHovered ] = color1;
+    colors [ ImGuiCol_ButtonActive ] = color1;
+    colors [ ImGuiCol_CheckMark ] = ImVec4(1, 1, 1, 1);
+    colors [ ImGuiCol_FrameBg ] = color1;
+    colors [ ImGuiCol_FrameBgHovered ] = color3;
+    colors [ ImGuiCol_FrameBgActive ] = color3;
+    colors [ ImGuiCol_Tab ] = ImVec4(color5.x, color5.y, color5.z, color5.w-0.2);
+    colors [ ImGuiCol_TabHovered ] = color3;
+    colors [ ImGuiCol_TabActive ] = color3;
+    colors [ ImGuiCol_TitleBg ] = color3;
+    colors [ ImGuiCol_TitleBgActive ] = color3;
+    colors [ ImGuiCol_TitleBgCollapsed ] = color3;
+    colors [ ImGuiCol_SliderGrab ] = color4;
+    colors [ ImGuiCol_SliderGrabActive ] = color4;
+    colors [ ImGuiCol_TextSelectedBg ] = color2;
+    colors [ ImGuiCol_Header ] = color1;
+    colors [ ImGuiCol_HeaderHovered ] = color1;
+    colors [ ImGuiCol_HeaderActive ] = color2;
+}
 
 void update_speed_hack() {
     const auto value = setting().onSpeedhack ? setting().gamespeed : 1.f;
@@ -118,6 +177,7 @@ void RenderMain() {
                 fclose(file);
             }
         }
+
         if (ImGui::Begin("Global", nullptr))
         {
             ImGui::SetWindowPos({ 5, 5 });
@@ -768,61 +828,7 @@ void RenderMain() {
         }
 
         //Fps(setting().fpslol);
-        auto* colors = ImGui::GetStyle().Colors;
-
-        color1.x = setting().Overlaycolor[0];
-        color1.y = setting().Overlaycolor[1];
-        color1.z = setting().Overlaycolor[2];
-        color1.w = setting().Overlaycolor[3] - 0.4;
-
-        color2.x = setting().Overlaycolor[0];
-        color2.y = setting().Overlaycolor[1];
-        color2.z = setting().Overlaycolor[2];
-        color2.w = 1;
-
-        color3.x = setting().Overlaycolor[0] + 0.3;
-        color3.y = setting().Overlaycolor[1] + 0.3;
-        color3.z = setting().Overlaycolor[2] + 0.3;
-        color3.w = setting().Overlaycolor[3] + 0.3;
-
-        color4.x = setting().Overlaycolor[0] - 0.1;
-        color4.y = setting().Overlaycolor[1] - 0.1;
-        color4.z = setting().Overlaycolor[2] - 0.1;
-        color4.w = setting().Overlaycolor[3] - 0.1;
-
-        color5.x = setting().Overlaycolor[0] + 0.1;
-        color5.y = setting().Overlaycolor[1] + 0.1;
-        color5.z = setting().Overlaycolor[2] + 0.1;
-        color5.w = setting().Overlaycolor[3] + 0.1;
-
-        color6.x = setting().BGcolor[0];
-        color6.y = setting().BGcolor[1];
-        color6.z = setting().BGcolor[2];
-        color6.w = setting().BGcolor[3];
-
-        //colors[ImGuiCol_Text] = ImVec4(1, 0, 0, 1);
-        colors[ImGuiCol_WindowBg] = color6;
-        colors[ImGuiCol_Border] = color2;
-        colors[ImGuiCol_BorderShadow] = color2;
-        colors[ImGuiCol_Button] = color3;
-        colors[ImGuiCol_ButtonHovered] = color1;
-        colors[ImGuiCol_ButtonActive] = color1;
-        colors[ImGuiCol_CheckMark] = ImVec4(1, 1, 1, 1);
-        colors[ImGuiCol_FrameBg] = color1;
-        colors[ImGuiCol_FrameBgHovered] = color3;
-        colors[ImGuiCol_FrameBgActive] = color3;
-        colors[ImGuiCol_Tab] = ImVec4(color5.x, color5.y, color5.z, color5.w - 0.2);
-        colors[ImGuiCol_TabHovered] = color3;
-        colors[ImGuiCol_TabActive] = color3;
-        colors[ImGuiCol_TitleBg] = color3;
-        colors[ImGuiCol_TitleBgActive] = color3;
-        colors[ImGuiCol_TitleBgCollapsed] = color3;
-        colors[ImGuiCol_SliderGrab] = color4;
-        colors[ImGuiCol_SliderGrabActive] = color4;
-        colors[ImGuiCol_TextSelectedBg] = color2;
-        colors[ImGuiCol_Header] = color1;
-        colors[ImGuiCol_HeaderHovered] = color1;
-        colors[ImGuiCol_HeaderActive] = color2;
+        colorSet( );
 
         oneX = false;
     }
@@ -831,6 +837,10 @@ void RenderMain() {
     //ImGui::PushFont(font);
     
     if (show) {
+
+        if ( setting( ).onExplorer )
+            render_explorer_window(setting( ).onExplorer);
+
         //ImGui::PushFont(font);
         if (ImGui::Begin("Global", nullptr,
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize));
@@ -1168,6 +1178,7 @@ void RenderMain() {
             ImGui::Checkbox("Show Object Hitbox", &setting().onObjHitbox);
             ImGui::Checkbox("Hitboxes on Death", &setting().onHitboxesOnDeath);
             ImGui::Checkbox("Start Pos Switcher", &setting().onStartPosSwitcher);
+            //ImGui::Checkbox("Zero Delay", &setting( ).onZeroDelay);
         }
 
 
@@ -1916,56 +1927,7 @@ void RenderMain() {
             ImGui::SetWindowFontScale(setting().UISize);
                 if (ImGui::ColorEdit4("Color Style", setting().Overlaycolor)) {
 
-                    auto* colors = ImGui::GetStyle().Colors;
-
-                    color1.x = setting().Overlaycolor[0];
-                    color1.y = setting().Overlaycolor[1];
-                    color1.z = setting().Overlaycolor[2];
-                    color1.w = setting().Overlaycolor[3] - 0.4;
-
-                    color2.x = setting().Overlaycolor[0];
-                    color2.y = setting().Overlaycolor[1];
-                    color2.z = setting().Overlaycolor[2];
-                    color2.w = 1;
-
-                    color3.x = setting().Overlaycolor[0] + 0.3;
-                    color3.y = setting().Overlaycolor[1] + 0.3;
-                    color3.z = setting().Overlaycolor[2] + 0.3;
-                    color3.w = setting().Overlaycolor[3] + 0.3;
-
-                    color4.x = setting().Overlaycolor[0] - 0.1;
-                    color4.y = setting().Overlaycolor[1] - 0.1;
-                    color4.z = setting().Overlaycolor[2] - 0.1;
-                    color4.w = setting().Overlaycolor[3] - 0.1;
-
-                    color5.x = setting().Overlaycolor[0] + 0.1;
-                    color5.y = setting().Overlaycolor[1] + 0.1;
-                    color5.z = setting().Overlaycolor[2] + 0.1;
-                    color5.w = setting().Overlaycolor[3] + 0.1;
-
-                    //colors[ImGuiCol_Text] = ImVec4(0.3, 0.3, 0.3, 1);
-                    colors[ImGuiCol_WindowBg] = color6;
-                    colors[ImGuiCol_Border] = color2;
-                    colors[ImGuiCol_BorderShadow] = color2;
-                    colors[ImGuiCol_Button] = color3;
-                    colors[ImGuiCol_ButtonHovered] = color1;
-                    colors[ImGuiCol_ButtonActive] = color1;
-                    colors[ImGuiCol_CheckMark] = ImVec4(1, 1, 1, 1);
-                    colors[ImGuiCol_FrameBg] = color1;
-                    colors[ImGuiCol_FrameBgHovered] = color3;
-                    colors[ImGuiCol_FrameBgActive] = color3;
-                    colors[ImGuiCol_Tab] = ImVec4(color5.x, color5.y, color5.z, color5.w - 0.2);
-                    colors[ImGuiCol_TabHovered] = color3;
-                    colors[ImGuiCol_TabActive] = color3;
-                    colors[ImGuiCol_TitleBg] = color3;
-                    colors[ImGuiCol_TitleBgActive] = color3;
-                    colors[ImGuiCol_TitleBgCollapsed] = color3;
-                    colors[ImGuiCol_SliderGrab] = color4;
-                    colors[ImGuiCol_SliderGrabActive] = color4;
-                    colors[ImGuiCol_TextSelectedBg] = color2;
-                    colors[ImGuiCol_Header] = color1;
-                    colors[ImGuiCol_HeaderHovered] = color1;
-                    colors[ImGuiCol_HeaderActive] = color2;
+                    colorSet( );
                 }
                 
                 if (ImGui::ColorEdit4("Background Color", setting().BGcolor)) {
@@ -1996,6 +1958,7 @@ void RenderMain() {
                 if (GetAsyncKeyState(0x34) && GetAsyncKeyState(0x37))
                 {
                     ImGui::Checkbox("Debug Labels", &setting().onDebugLabels);
+                    ImGui::Checkbox("Cocos Explorer", &setting( ).onExplorer);
                 }
                 //ImGui::Checkbox("ZA WARUDO", &setting().onTimeStop);
             }
@@ -2034,6 +1997,7 @@ void RenderMain() {
 
     update_fps_bypass();
     update_speed_hack();
+    colorSet( );
 
     if (setting().onFPSbypass /* && CCDirector::sharedDirector()->getAnimationInterval() != (1.0 / setting().fpslol) */) {
         update_fps_bypass();

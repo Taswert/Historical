@@ -99,8 +99,10 @@ struct SettingStruct {
     bool onNoclipDeaths = false;
     bool onClkTimer = false;
     bool anyEdit = false;
+    //bool onZeroDelay = false;
 
     bool onDebugLabels = false;
+    bool onExplorer = false;
 
     bool onNoclipOutOfMe = false;
     bool onSpeedhackCounted = false;

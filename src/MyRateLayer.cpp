@@ -5,7 +5,7 @@ bool MyRateLayer::init()
 {
     static CCLayerColor* cclcol;
     //static CCLayerColor::initWithColor(ccc4(0, 0, 0, 105));
-    if (!(cclcol->initWithColor(ccc4(0, 0, 0, 105)))) return false;
+    if (!(cclcol->initWithColor(ccc4(0, 0, 0, 150)))) return false;
     cocos2d::extension::CCScale9Sprite* bg = cocos2d::extension::CCScale9Sprite::create("GJ_square01.png");
     auto director = CCDirector::sharedDirector();
     bg->setContentSize({ 360, 180 });

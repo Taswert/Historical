@@ -1,3 +1,4 @@
+#pragma once
 #include "includes.h"
 
 #include "PauseLayer.h"
@@ -21,6 +22,8 @@
 #include <fcntl.h>
 #include <io.h>
 #include "ObjectsIds.h"
+
+#include "imgui-hook.hpp"
 //#include "HitboxNode.h"
 
 ;
@@ -1057,6 +1060,21 @@ bool __fastcall EditorUI_init_H(gd::EditorUI* self, void*, CCLayer* editor) {
     editMenu->addChild(editBtn);
     self->addChild(editMenu);
 
+    auto duplicateSprite = CCSprite::createWithSpriteFrameName("GJ_duplicateObjectBtn_001.png");
+    editUI->getDuplicateButton()->setVisible(0);
+    duplicateSprite->setScale(0.85f);
+    duplicateSprite->setPosition({23.46f, 24.225});
+    auto duplicateBtn = gd::CCMenuItemSpriteExtra::create(duplicateSprite, nullptr, self, menu_selector(EditorUI::Callback::onDuplicate));
+    duplicateBtn->setPosition({ -8.f, -44.f });
+    duplicateBtn->setTag(4581);
+    editMenu->addChild(duplicateBtn);
+
+    auto colIncSprite = CCSprite::createWithSpriteFrameName("player_special_02_001.png");
+    auto colIncBtn = gd::CCMenuItemSpriteExtra::create(colIncSprite, nullptr, self, menu_selector(MyCustomizeObjectLayer::onColInc));
+    colIncBtn->setPosition({ -100.f, -60.f });
+    if (setting().onDebugLabels)
+        editMenu->addChild(colIncBtn);
+
     auto leftiestLayerSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
     leftiestLayerSprite->setScale(0.5f);
     auto leftiestLayerButton = gd::CCMenuItemSpriteExtra::create(leftiestLayerSprite, nullptr, self, menu_selector(EditorUI::Callback::toTheFirstLayerButton));
@@ -1120,11 +1138,17 @@ bool __fastcall EditorUI_init_H(gd::EditorUI* self, void*, CCLayer* editor) {
         auto selobjplbl = CCLabelBMFont::create("", "chatFont.fnt");
         selobjplbl->setString(CCString::createWithFormat("address: %p", selectedObject)->getCString());
         selobjplbl->setVisible(0);
-        selobjplbl->setTag(4572);
-        selobjplbl->setAnchorPoint({ 1.f, 0.5f });
-        selobjplbl->setPosition(150, CCDirector::sharedDirector()->getScreenTop() - 70);
+        selobjplbl->setTag(1);
         selobjplbl->setScale(0.66f);
-        self->addChild(selobjplbl);
+        auto debugMenu = CCMenu::create( );
+        debugMenu->setPosition(150, CCDirector::sharedDirector( )->getScreenTop( )-70);
+        debugMenu->setTag(4572);
+        auto selobjpbtn = gd::CCMenuItemSpriteExtra::create(selobjplbl, nullptr, self, menu_selector(EditorUI::Callback::onDebugCopyObjAddress));
+        selobjpbtn->setTag(1);
+        selobjpbtn->setAnchorPoint({ 1.f, 0.5f });
+        debugMenu->addChild(selobjpbtn);
+
+        self->addChild(debugMenu);
 
         auto selobjidlbl = CCLabelBMFont::create("", "chatFont.fnt");
         selobjidlbl->setString(CCString::createWithFormat("ID: %d", 0)->getCString());
@@ -1211,7 +1235,7 @@ bool(__thiscall* EditorUI_dtor)(gd::EditorUI* self);
 bool __fastcall EditorUI_dtor_H(gd::EditorUI* self) {
     //editUI = self;
     editUI = nullptr;
-    if (setting().onPersistentClipboard) savedClipboard = self->clipboard();
+    savedClipboard = self->clipboard();
     EditorUI_dtor(self);
 }
 
@@ -1226,6 +1250,8 @@ void __fastcall EditorPauseLayer_saveLevel_H(CCLayer* self) {
     editUI = nullptr;
     EditorPauseLayer_saveLevel(self);
 }
+
+
 
 //bool(__thiscall* MenuLayer_init)(CCLayer* self);
 //bool __fastcall MenuLayer_init_H(CCLayer* self) {
@@ -1248,29 +1274,53 @@ void __fastcall Scheduler_update_H(CCScheduler* self, void* edx, float idk) {
     //cocos2d::extension::RGBA
     if (editUI)
     {
+        //auto objArr = editUI->getAllObjects( );
+        //for ( int i = 0; i<objArr->count( ); i++ ) {
+        //    auto iObj = reinterpret_cast< gd::GameObject * >(objArr->objectAtIndex(i));
+        //    if ( saws.contains(iObj->getObjectID( )) ) {
+        //        iObj->setRotation(iObj->getRotation( )+1.f);
+        //    }
+        //}
+
         if (setting().onHideEditorUI) editUI->setVisible(0);
         else editUI->setVisible(1);
         auto selobjcountlbl = editUI->getChildByTag(4570);
         auto lvllbl = editUI->getChildByTag(4571);
-        auto selobjplbl = editUI->getChildByTag(4572);
+        auto debugMenu = editUI->getChildByTag(4572);
+        auto selobjpbtn = debugMenu->getChildByTag(1);
+        auto selobjplbl = selobjpbtn->getChildByTag(1);
         auto selobjidlbl = editUI->getChildByTag(4573);
         auto selobjcollbl = editUI->getChildByTag(4574);
         auto selobjgroup = editUI->getChildByTag(4575);
 
         auto editMenu = from<CCMenu *>(editUI->getEditObjectButton( ), 0xAC);
         auto editBtn = reinterpret_cast<gd::CCMenuItemSpriteExtra *>(editMenu->getChildByTag(4580));
+        auto dupclicateBtn = reinterpret_cast< gd::CCMenuItemSpriteExtra * >(editMenu->getChildByTag(4581));
 
         if ( editBtn ) {
-            if ( !from<bool>(editUI->getEditObjectButton( ), 0x11c) && !setting().anyEdit || 
-                editUI->getSelectedObjectsOfCCArray( )->count( )==0 && setting( ).anyEdit ) {
-                editBtn->setOpacity(175);
-                editBtn->setColor({150, 150, 150});
-                editBtn->setEnabled(false);
-            }
-            else {
+            if ((from<bool>(editUI->getEditObjectButton( ), 0x11c)||setting( ).anyEdit||editUI->isEveryObjectIsTrigger( ))
+                &&editUI->getSelectedObjectsOfCCArray( )->count( )>0 ) {
                 editBtn->setOpacity(255);
                 editBtn->setColor({ 255, 255, 255 });
                 editBtn->setEnabled(true);
+            }
+            else {
+                editBtn->setOpacity(175);
+                editBtn->setColor({166, 166, 166});
+                editBtn->setEnabled(false);
+            }
+        }
+
+        if ( dupclicateBtn ) {
+            if (editUI->getSelectedObjectsOfCCArray( )->count( )==0) {
+                dupclicateBtn->setOpacity(175);
+                dupclicateBtn->setColor({ 166, 166, 166 });
+                dupclicateBtn->setEnabled(false);
+            }
+            else {
+                dupclicateBtn->setOpacity(255);
+                dupclicateBtn->setColor({ 255, 255, 255 });
+                dupclicateBtn->setEnabled(true);
             }
         }
 
@@ -1449,40 +1499,78 @@ void __fastcall EditorColorSetter_H(gd::GameObject* obj, void* edx, ccColor4B co
     int* a = EditorColorSetter(obj, col);
 
     switch ( obj->getActiveColor( ) ) {
-    case 1://p1 -
+    case 0:
+        *a = 0x0AFFFFFF;
+        break;
+    case 1: //p1 -
         *a = 0x0AFF96AF;
         break;
-    case 2://p2 -
+    case 2: //p2 -
         *a = 0x0A9696FF;
         break;
-    case 3://c1 -
+    case 3: //c1 -
         *a = 0x0AFF96FF;
         break;
-    case 4://c2 -
+    case 4: //c2 -
         *a = 0x0A96FFFF;
         break;
-    case 5://lbg -
+    case 5: //lbg -
         *a = 0x0AFFAF4B;
         break;
-    case 6://c3 -
+    case 6: //c3 -
         *a = 0x0AFFFF96;
         break;
-    case 7://c4 -
+    case 7: //c4 -
         *a = 0x0A96FF96;
         break;
-    case 8://3dl -
+    case 8: //3dl -
         *a = 0x0A00FFFF;
         break;
+    case 9: //3dl -
+        *a = 0x0AA6A6A6;
+        break;
     default:
-        *a = 0x0AFFFFFF;
+        *a = 0x0A0000FF;
     }
     if ( obj->isInvisible() ) {
         *a = 0x0A007FFF;
     }
-
-
+    
     //*a = 0x0A0000D1;
 }
+
+bool(__thiscall *ColorSelectPopup_init)(gd::FLAlertLayer *self, CCObject* obj, int i1, int i2, int i3);
+bool __fastcall ColorSelectPopup_init_H(gd::FLAlertLayer *self, void* edx, CCObject* obj, int i1, int i2, int i3) {
+    if ( !ColorSelectPopup_init(self, obj, i1, i2, i3) ) return false;
+
+    if ( setting( ).onDebugLabels )
+    {
+        auto lbl = CCLabelBMFont::create("", "chatFont.fnt");
+        lbl->setString(CCString::createWithFormat("CSP pointer: %p", self)->getCString( ));
+        lbl->setAnchorPoint({ 1.f, 0.5f });
+        lbl->setPosition(CCDirector::sharedDirector( )->getScreenRight( )-120, 140);
+        lbl->setScale(0.5f);
+        lbl->setZOrder(1000);
+        self->getLayer()->addChild(lbl);
+    }
+
+    return true;
+}
+
+//bool(__thiscall *EditorUI_onDuplicate)(CCObject* obj);
+//void __fastcall EditorUI_onDuplicate_H(CCObject* obj) {
+//    auto eui = reinterpret_cast< gd::EditorUI * >(obj);
+//    auto preDuplicateObjs = eui->getSelectedObjectsOfCCArray( );
+//    EditorUI_onDuplicate(obj);
+//    std::cout<<eui<<std::endl;
+    //auto postDuplicateObjs = eui->getSelectedObjectsOfCCArray( );
+    //
+    //for ( int i = 0; i<preDuplicateObjs->count( ); i++ ) {
+        //int groupId = reinterpret_cast< gd::GameObject * >(postDuplicateObjs->objectAtIndex(i))->getGroup( );
+        //reinterpret_cast< gd::GameObject * >(preDuplicateObjs->objectAtIndex(i))->setGroup(groupId);
+    //}
+//}
+
 
 DWORD WINAPI thread_func(void* hModule) {
     WriteProcessMemory(GetCurrentProcess(), reinterpret_cast<void*>(gd::base + 0x3A21B), "\xB8\x01\x00\x00\x00\x90\x90", 7, NULL);
@@ -1501,6 +1589,10 @@ DWORD WINAPI thread_func(void* hModule) {
         FreeLibraryAndExitThread(reinterpret_cast<HMODULE>(hModule), 0);
     }
 
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x29b60),
+        reinterpret_cast< void * >(&ColorSelectPopup_init_H),
+        reinterpret_cast< void ** >(&ColorSelectPopup_init));
     //0xd6040 PlayBTN
     //0xd61b0 EditBTN
     //0xd64c0 MenuBTN!
@@ -1611,6 +1703,11 @@ DWORD WINAPI thread_func(void* hModule) {
         reinterpret_cast<void*>(gd::base + 0xf1fe0),
         reinterpret_cast<void*>(&PlayLayer_onQuit_H),
         reinterpret_cast<void**>(&PlayLayer_onQuit));
+
+    //MH_CreateHook(
+    //    reinterpret_cast< void * >(gd::base+0x48d40),
+    //    reinterpret_cast< void * >(&EditorUI_onDuplicate_H),
+    //    reinterpret_cast< void ** >(&EditorUI_onDuplicate));
 
 
     MH_CreateHook(

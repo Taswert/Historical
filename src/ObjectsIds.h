@@ -1,6 +1,6 @@
 #pragma once
 
-std::set<int>hazard = {
+inline std::set<int>hazard = {
 	8,
 	39,
 	103,
@@ -31,7 +31,7 @@ std::set<int>hazard = {
 	422
 };
 
-std::set<int>orbsnportals = {
+inline std::set<int>orbsnportals = {
 	35, 36,					//yellow orb and pad
 	67, 84,					//blue orb and pad
 	140, 141,				//purple orb and pad
@@ -44,7 +44,7 @@ std::set<int>orbsnportals = {
 	142						//coin
 };
 
-std::set<int>solids = {
+inline std::set<int>solids = {
 	1, 83, 2, 3, 4, 6, 7,
 	69, 70, 71, 72, 74, 75,
 	76, 77, 78, 81, 82,
@@ -66,7 +66,7 @@ std::set<int>solids = {
 	328, 329, //ramp corners this is cursed af
 };
 
-std::set<int>ramps = {
+inline std::set<int>ramps = {
 	673, 674, 665, 666,
 	289, 291, 299, 301,
 	305, 307, 309, 311, 
@@ -82,7 +82,7 @@ std::set<int>ramps = {
 	363, 364, 366, 367
 };
 
-std::set<int>saws = {
+inline std::set<int>saws = {
 	88, 89, 98,
 	675, 676, 677,
 	397, 398, 399,
@@ -90,4 +90,16 @@ std::set<int>saws = {
 	740, 741, 742,
 	678, 679, 680,
 	183, 184, 185
-}
+};
+
+inline std::set<int>gamemodePortals = {
+	12, 13, 47, 111, 660,
+};
+
+inline std::set<int>speedPortals = {
+	200, 201, 202, 203,
+};
+
+inline std::set<int> triggers = {
+	29, 30, 104, 105, 744, 221, 717, 718, 743,
+};

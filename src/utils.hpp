@@ -50,6 +50,17 @@ T union_cast(U value) {
 	return u.a;
 }
 
+inline void set_clipboard_text(std::string_view text) {
+	if ( !OpenClipboard(NULL) ) return;
+	if ( !EmptyClipboard( ) ) return;
+	const auto len = text.size( );
+	auto mem = GlobalAlloc(GMEM_MOVEABLE, len+1);
+	memcpy(GlobalLock(mem), text.data( ), len+1);
+	GlobalUnlock(mem);
+	SetClipboardData(CF_TEXT, mem);
+	CloseClipboard( );
+}
+
 template <typename H, __to_handler_f_type<H> Func>
 static const auto to_handler = union_cast<H>(ThiscallWrapper<decltype(Func)>::template wrap<Func>);
 
