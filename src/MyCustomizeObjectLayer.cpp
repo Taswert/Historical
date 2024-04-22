@@ -49,6 +49,25 @@ int getColorForPopup(int id) {
 	return 9;
 }
 
+int getOffsetForSco(int id) {
+	switch ( id )
+	{
+	case 3:
+		return 0xFC;
+	case 4:
+		return 0x100;
+	case 6:
+		return 0x104;
+	case 7:
+		return 0x108;
+	case 8:
+		return 0xF8;
+	default:
+		break;
+	}
+	return 9;
+}
+
 class ColorButtonSpriteExtra : public gd::CCMenuItemSpriteExtra {
 public:
 	CCLabelBMFont *label;
@@ -58,7 +77,7 @@ public:
 	bool isSpecial;
 	short id;
 
-	virtual void selected() override {
+	virtual void selected( ) override {
 		this->stopActionByTag(0);
 		auto actionInterval = cocos2d::CCScaleTo::create(0.3, 1.26f);
 		auto action = cocos2d::CCEaseBounceOut::create(actionInterval);
@@ -74,9 +93,9 @@ public:
 		this->runAction(action);
 	}
 
-	static ColorButtonSpriteExtra *create(const char* lbl, CCLayer* layer, int id, bool isSpecial) {
+	static ColorButtonSpriteExtra *create(const char *lbl, CCLayer *layer, int id, bool isSpecial) {
 		auto ret = new ColorButtonSpriteExtra( );
-		if ( ret&&ret->init(lbl, layer, id, isSpecial)) {
+		if ( ret&&ret->init(lbl, layer, id, isSpecial) ) {
 			ret->autorelease( );
 		}
 		else {
@@ -135,6 +154,224 @@ public:
 	}
 };
 
+class EditColorSelectPopup : public CCLayer, cocos2d::extension::ColorPickerDelegate { //my class
+public:
+	bool P1bool;
+	bool P2bool;
+	bool Blendbool;
+	gd::SettingsColorObject *settingsColorObject;
+	ColorButtonSpriteExtra *cbse;
+
+	static auto create(gd::SettingsColorObject *sco, ColorButtonSpriteExtra* button) {
+		auto ret = new EditColorSelectPopup;
+		if ( ret&&ret->init(sco, button) ) {
+			ret->cocos2d::CCObject::autorelease( );
+		}
+		else {
+			delete ret;
+			ret = nullptr;
+		}
+		return ret;
+	}
+	bool init(gd::SettingsColorObject *sco, ColorButtonSpriteExtra * button)
+	{
+		cbse = button;
+		settingsColorObject = sco;
+		P1bool = false;
+		P2bool = false;
+		if ( sco->getPlayerMode( )==1 )
+			P1bool = true;
+		else if ( sco->getPlayerMode( )==2 )
+			P2bool = true;
+		Blendbool = sco->getBlend( );
+
+		CCLayer::init( );
+		CCLayerColor *cclcol = CCLayerColor::create(ccc4(0, 0, 0, 150));
+		cclcol->setZOrder(1);
+
+		auto director = CCDirector::sharedDirector( );
+
+		auto touchDispatcher = director->m_pTouchDispatcher;
+		touchDispatcher->incrementForcePrio( );
+		touchDispatcher->incrementForcePrio( );
+		registerWithTouchDispatcher( );
+		setTouchEnabled(true);
+		setKeypadEnabled(true);
+		setMouseEnabled(true);
+
+		this->addChild(cclcol);
+
+		auto bgSprite = CCSprite::create("GJ_button_03.png");
+		bgSprite->setScale(100.f);
+		bgSprite->setOpacity(0);
+		auto bgButton = gd::CCMenuItemSpriteExtra::create(bgSprite, nullptr, this, nullptr);
+		auto bgMenu = CCMenu::create( );
+		bgMenu->addChild(bgButton);
+		bgMenu->setZOrder(0);
+		bgMenu->setPosition((CCDirector::sharedDirector( )->getScreenRight( ))-25, (CCDirector::sharedDirector( )->getScreenTop( ))-25);
+		this->addChild(bgMenu);
+
+		cocos2d::extension::CCScale9Sprite *colorBtnBg = cocos2d::extension::CCScale9Sprite::create("square02_001.png");
+		colorBtnBg->setContentSize({ 300.f, 300.f });
+		colorBtnBg->setPosition(director->getScreenRight( )/2, director->getScreenTop( )/2);
+		colorBtnBg->setOpacity(150);
+		colorBtnBg->setZOrder(2);
+		this->addChild(colorBtnBg);
+
+
+
+		auto selColLbl = CCLabelBMFont::create("Select Color", "goldFont.fnt");
+		selColLbl->setZOrder(3);
+		selColLbl->setPosition(director->getScreenRight( )/2, director->getScreenTop( )/2+130.f);
+		this->addChild(selColLbl);
+
+
+
+		auto mainMenu = CCMenu::create( );
+		mainMenu->setZOrder(3);
+		auto cancelSprite = gd::ButtonSprite::create("OK", 40, 0, 2.5f, true, "goldFont.fnt", "GJ_button_01.png", 30.0);
+		auto cancelButton = gd::CCMenuItemSpriteExtra::create(cancelSprite, nullptr, this, menu_selector(EditColorSelectPopup::onOk));
+		cancelButton->setPosition({ 0.f, -130.f });
+		mainMenu->addChild(cancelButton);
+		mainMenu->setTag(5);
+		this->addChild(mainMenu);
+
+		auto copySprite = gd::ButtonSprite::create("Copy", 40, 0, 2.5f, true, "goldFont.fnt", "GJ_button_04.png", 30.0);
+		auto copyButton = gd::CCMenuItemSpriteExtra::create(copySprite, nullptr, this, menu_selector(EditColorSelectPopup::onCopyColor));
+		copyButton->setPosition({ -50.f+director->getScreenRight( )/2, -30.f+director->getScreenTop( )/2 });
+		mainMenu->addChild(copyButton);
+
+		auto pasteSprite = gd::ButtonSprite::create("Paste", 40, 0, 2.5f, true, "goldFont.fnt", "GJ_button_04.png", 30.0);
+		auto pasteButton = gd::CCMenuItemSpriteExtra::create(pasteSprite, nullptr, this, menu_selector(EditColorSelectPopup::onPasteColor));
+		pasteButton->setPosition({ -50.f+director->getScreenRight( )/2, -70.f+director->getScreenTop( )/2 });
+		mainMenu->addChild(pasteButton);
+
+
+
+		auto coloredSquareFirst = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
+		coloredSquareFirst->setPosition({ 30.f, director->getScreenTop( )-30.f });
+		coloredSquareFirst->setZOrder(3);
+		coloredSquareFirst->setColor(sco->getColorValue( ));
+		coloredSquareFirst->setTag(1);
+		this->addChild(coloredSquareFirst);
+
+		auto coloredSquareSec = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
+		coloredSquareSec->setPosition({ 30.f, director->getScreenTop( )-60.f });
+		coloredSquareSec->setZOrder(3);
+		coloredSquareSec->setColor(sco->getColorValue( ));
+		this->addChild(coloredSquareSec);
+
+
+
+		auto toggleOn = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
+		auto toggleOff = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
+
+		auto BlendToggler = gd::CCMenuItemToggler::create(BlendTogglerSprite(toggleOn, toggleOff), BlendTogglerSprite(toggleOff, toggleOn), this, menu_selector(EditColorSelectPopup::BlendCallback));
+		BlendToggler->setPosition({ -director->getScreenRight( )/2+30.f, -50.f });
+		BlendToggler->setScale(0.8f);
+		mainMenu->addChild(BlendToggler);
+
+		auto BlendLbl = CCLabelBMFont::create("Use Blending", "bigFont.fnt");
+		BlendLbl->setPosition({ 50.f, director->getScreenTop( )/2-50.f });
+		BlendLbl->setAnchorPoint({ 0.f, 0.5f });
+		BlendLbl->setZOrder(3);
+		BlendLbl->setScale(0.35f);
+		this->addChild(BlendLbl);
+
+		auto P1Toggler = gd::CCMenuItemToggler::create(toggleOff, toggleOn, this, menu_selector(EditColorSelectPopup::P1Callback));
+		P1Toggler->toggle(P1bool);
+		P1Toggler->setPosition({ -director->getScreenRight( )/2+30.f, -90.f });
+		P1Toggler->setScale(0.8f);
+		P1Toggler->setTag(1);
+		mainMenu->addChild(P1Toggler);
+
+		auto P1Lbl = CCLabelBMFont::create("Player\nColor 1", "bigFont.fnt");
+		P1Lbl->setPosition({ 50.f, director->getScreenTop( )/2-90.f });
+		P1Lbl->setAnchorPoint({ 0.f, 0.5f });
+		P1Lbl->setZOrder(3);
+		P1Lbl->setScale(0.35f);
+		this->addChild(P1Lbl);
+
+		auto P2Toggler = gd::CCMenuItemToggler::create(toggleOff, toggleOn, this, menu_selector(EditColorSelectPopup::P2Callback));
+		P2Toggler->toggle(P2bool);
+		P2Toggler->setPosition({ -director->getScreenRight( )/2+30.f, -130.f });
+		P2Toggler->setScale(0.8f);
+		P2Toggler->setTag(2);
+		mainMenu->addChild(P2Toggler);
+
+		auto P2Lbl = CCLabelBMFont::create("Player\nColor 2", "bigFont.fnt");
+		P2Lbl->setPosition({ 50.f, director->getScreenTop( )/2-130.f });
+		P2Lbl->setAnchorPoint({ 0.f, 0.5f });
+		P2Lbl->setZOrder(3);
+		P2Lbl->setScale(0.35f);
+		this->addChild(P2Lbl);
+
+
+
+		auto colorPicker = reinterpret_cast< cocos2d::extension::CCControlColourPicker*(__thiscall *)() >(GetProcAddress(GetModuleHandleA("libExtensions.dll"), "?create@CCControlColourPicker@extension@cocos2d@@SAPAV123@XZ"))();
+		colorPicker->setPosition({ director->getScreenRight( )/2, director->getScreenTop( )/2 });
+		colorPicker->setZOrder(3);
+		colorPicker->setTag(3);
+		colorPicker->setDelegate(this);
+		colorPicker->setColorValue(sco->getColorValue( ));
+		this->addChild(colorPicker);
+
+		return true;
+	}
+
+	virtual void colorValueChanged(ccColor3B col) override {
+		//std::cout<<col.r << col.g << col.b<<std::endl;
+		reinterpret_cast< CCSprite * >(getChildByTag(1))->setColor(col);
+		settingsColorObject->setColorValue(col);
+		//cbse->setColor(col);
+	}
+
+	CCSprite *BlendTogglerSprite(CCSprite *toggleOn, CCSprite *toggleOff)
+	{
+		return Blendbool ? toggleOn : toggleOff;
+	}
+	void BlendCallback(CCObject *) {
+		Blendbool = !Blendbool;
+	}
+	void P1Callback(CCObject *) {
+		P1bool = !P1bool;
+		P2bool = false;
+		reinterpret_cast< gd::CCMenuItemToggler * >(getChildByTag(5)->getChildByTag(2))->toggle(false);
+	}
+	void P2Callback(CCObject *) {
+		P2bool = !P2bool;
+		P1bool = false;
+		reinterpret_cast< gd::CCMenuItemToggler * >(getChildByTag(5)->getChildByTag(1))->toggle(false);
+	}
+
+
+	void onOk(CCObject *) {
+		keyBackClicked( );
+	}
+	void onCopyColor(CCObject *) {
+		auto col = settingsColorObject->getColorValue( );
+		gd::GameManager::sharedState( )->setClipboardedColor(col);
+	}
+	void onPasteColor(CCObject *) {
+		auto col = gd::GameManager::sharedState( )->getClipboardedColor( );
+		reinterpret_cast< CCSprite * >(getChildByTag(1))->setColor(col);
+		settingsColorObject->setColorValue(col);
+		reinterpret_cast< cocos2d::extension::CCControlColourPicker * >(getChildByTag(3))->setColorValue(col);
+	}
+	virtual void keyBackClicked( ) override {
+		settingsColorObject->setBlend(Blendbool);
+		if ( P1bool )
+			settingsColorObject->setPlayerMode(1);
+		else if ( P2bool )
+			settingsColorObject->setPlayerMode(2);
+		else
+			settingsColorObject->setPlayerMode(0);
+		cbse->btnSprite->setColor(settingsColorObject->getColorValue( ));
+		cbse = nullptr;
+		settingsColorObject = nullptr;
+		this->removeMeAndCleanup( );
+	}
+};
 
 class MultipleColorSelectPopup : public CCLayer, cocos2d::extension::ColorPickerDelegate { //my class
 public:
@@ -215,6 +452,7 @@ public:
 		auto cancelButton = gd::CCMenuItemSpriteExtra::create(cancelSprite, nullptr, this, menu_selector(MultipleColorSelectPopup::onOk));
 		cancelButton->setPosition({ 0.f, -130.f });
 		mainMenu->addChild(cancelButton);
+		mainMenu->setTag(5);
 		this->addChild(mainMenu);
 
 		auto copySprite = gd::ButtonSprite::create("Copy", 40, 0, 2.5f, true, "goldFont.fnt", "GJ_button_04.png", 30.0);
@@ -277,11 +515,8 @@ public:
 		fadeTimeLbl->setPosition(director->getScreenRight( )/2, director->getScreenTop( )/2-71.f);
 		this->addChild(fadeTimeLbl);
 
-		//auto colorPicker = cocos2d::extension::CCControlColourPicker::create( );
 		auto fadeTimeSlider = gd::Slider::create(this, menu_selector(MultipleColorSelectPopup::fadeTimeSliderChanged), 1.f);
 		fadeTimeSlider->setPosition(director->getScreenRight( )/2, director->getScreenTop( )/2-96.f);
-		//SliderThumb *sfxSliderThumb = from<SliderThumb *>(from<int *>(sfxSlider, 0x13c), 0x160);
-		//sfxSliderThumb->setValue(from<float>(fmod, 0x16c));
 		fadeTimeSlider->setZOrder(3);
 		if ( !mixedFadeTime ) {
 			fadeTimeLbl->setString(CCString::createWithFormat("FadeTime: %.2f%", reinterpret_cast< gd::GameObject * >(triggers->objectAtIndex(0))->getFadeTime( ))->getCString( ));
@@ -300,28 +535,12 @@ public:
 		coloredSquareFirst->setTag(1);
 		this->addChild(coloredSquareFirst);
 
-		//auto hexLabelFirst = CCLabelBMFont::create("HEXHEX", "bigFont.fnt");
-		//hexLabelFirst->setScale(0.35f);
-		//hexLabelFirst->setZOrder(3);
-		//hexLabelFirst->setTag(4);
-		//hexLabelFirst->setAnchorPoint({ 0.f, 0.5f });
-		//hexLabelFirst->setPosition({ 50.f, director->getScreenTop( )-30.f });
-		//this->addChild(hexLabelFirst);
-
 		auto coloredSquareSec = CCSprite::createWithSpriteFrameName("whiteSquare60_001.png");
 		coloredSquareSec->setPosition({ 30.f, director->getScreenTop( )-60.f });
 		coloredSquareSec->setZOrder(3);
 		if (!mixedCol)
 			coloredSquareSec->setColor(reinterpret_cast< gd::GameObject * >(triggers->objectAtIndex(0))->getTriggerColor( ));
 		this->addChild(coloredSquareSec);
-
-		//auto hexLabelSec = CCLabelBMFont::create("HEXHEX", "bigFont.fnt");
-		//hexLabelSec->setScale(0.35f);
-		//hexLabelSec->setZOrder(3);
-		//hexLabelSec->setTag(5);
-		//hexLabelSec->setAnchorPoint({ 0.f, 0.5f });
-		//hexLabelSec->setPosition({ 50.f, director->getScreenTop( )-60.f });
-		//this->addChild(hexLabelSec);
 
 
 
@@ -352,9 +571,11 @@ public:
 		BlendLbl->setScale(0.35f);
 		this->addChild(BlendLbl);
 
-		auto P1Toggler = gd::CCMenuItemToggler::create(P1TogglerSprite(toggleOn, toggleOff), P1TogglerSprite(toggleOff, toggleOn), this, menu_selector(MultipleColorSelectPopup::P1Callback));
+		auto P1Toggler = gd::CCMenuItemToggler::create(toggleOff, toggleOn, this, menu_selector(MultipleColorSelectPopup::P1Callback));
+		P1Toggler->toggle(P1bool);
 		P1Toggler->setPosition({ -director->getScreenRight( )/2+30.f, -90.f });
 		P1Toggler->setScale(0.8f);
+		P1Toggler->setTag(1);
 		mainMenu->addChild(P1Toggler);
 
 		auto P1Lbl = CCLabelBMFont::create("Player\nColor 1", "bigFont.fnt");
@@ -364,9 +585,11 @@ public:
 		P1Lbl->setScale(0.35f);
 		this->addChild(P1Lbl);
 
-		auto P2Toggler = gd::CCMenuItemToggler::create(P2TogglerSprite(toggleOn, toggleOff), P2TogglerSprite(toggleOff, toggleOn), this, menu_selector(MultipleColorSelectPopup::P2Callback));
+		auto P2Toggler = gd::CCMenuItemToggler::create(toggleOff, toggleOn, this, menu_selector(MultipleColorSelectPopup::P2Callback));
+		P2Toggler->toggle(P2bool);
 		P2Toggler->setPosition({ -director->getScreenRight( )/2+30.f, -130.f });
 		P2Toggler->setScale(0.8f);
+		P2Toggler->setTag(2);
 		mainMenu->addChild(P2Toggler);
 
 		auto P2Lbl = CCLabelBMFont::create("Player\nColor 2", "bigFont.fnt");
@@ -378,20 +601,11 @@ public:
 
 
 
-		//auto textField = CCTextFieldTTF::create("#HEXColor", "bigFont.fnt", 20);
-		//textField->setZOrder(3);
-		//textField->setPosition({ 50.f, director->getScreenTop( )/2 });
-		//this->addChild(textField);
-
-
-		//auto colorPicker = cocos2d::extension::CCControlColourPicker::create( );
 		auto colorPicker = reinterpret_cast< cocos2d::extension::CCControlColourPicker*(__thiscall *)() >(GetProcAddress(GetModuleHandleA("libExtensions.dll"), "?create@CCControlColourPicker@extension@cocos2d@@SAPAV123@XZ"))();
 		colorPicker->setPosition({ director->getScreenRight( )/2, director->getScreenTop( )/2 + 30.f });
 		colorPicker->setZOrder(3);
 		colorPicker->setTag(3);
-		std::cout<<"1"<<std::endl;
 		colorPicker->setDelegate(this);
-		std::cout<<"2"<<std::endl;
 		if (!mixedCol )
 			colorPicker->setColorValue(reinterpret_cast< gd::GameObject * >(triggers->objectAtIndex(0))->getTriggerColor( ));
 		this->addChild(colorPicker);
@@ -433,21 +647,17 @@ public:
 		mixedBlend = false;
 	}
 
-	CCSprite *P1TogglerSprite(CCSprite *toggleOn, CCSprite *toggleOff)
-	{
-		return P1bool ? toggleOn : toggleOff;
-	}
 	void P1Callback(CCObject *) {
 		P1bool = !P1bool;
+		P2bool = false;
+		reinterpret_cast< gd::CCMenuItemToggler * >(getChildByTag(5)->getChildByTag(2))->toggle(false);\
 		mixedP1 = false;
 	}
 
-	CCSprite *P2TogglerSprite(CCSprite *toggleOn, CCSprite *toggleOff)
-	{
-		return P2bool ? toggleOn : toggleOff;
-	}
 	void P2Callback(CCObject *) {
 		P2bool = !P2bool;
+		P1bool = false;
+		reinterpret_cast< gd::CCMenuItemToggler * >(getChildByTag(5)->getChildByTag(1))->toggle(false);
 		mixedP2 = false;
 	}
 
@@ -515,26 +725,25 @@ void MyCustomizeObjectLayer::keyBackClicked( )
 	this->removeMeAndCleanup( );
 }
 
-void showPicker(CCLayer *layer, int colorId, int *settingsColorObject) {
-	return reinterpret_cast< void(__thiscall *)
-		(CCLayer *, int, int *) >
-		(gd::base+0x993a0)
-		(layer, colorId, settingsColorObject);
-}
+//void showPicker(CCLayer *layer, int colorId, int *settingsColorObject) {
+//	return reinterpret_cast< void(__thiscall *)
+//		(CCLayer *, int, int *) >
+//		(gd::base+0x993a0)
+//		(layer, colorId, settingsColorObject);
+//}
 
 void MyCustomizeObjectLayer::onColorBtn(CCObject *btn) {
 	if ( !colorBtnVec.empty( ) ) {
 		auto darealbtn = static_cast< ColorButtonSpriteExtra * >(btn);
 		
 		if ( highlightedBtn==darealbtn) {
-			std::cout<<"ColBTN "<<btn<<std::endl;
 			auto lel = from<gd::LevelEditorLayer *>(this, 0xAC);
-			auto sco = from<int *>(lel->getLevelSettingsObject( ), 0xE8);
-			std::cout<<"lel "<<lel<<std::endl;
-			std::cout<<"sco "<<sco<<std::endl;
+			auto sco = from<gd::SettingsColorObject *>(lel->getLevelSettingsObject( ), getOffsetForSco(darealbtn->id));
 			if ( !darealbtn->isSpecial ) {
 				//auto csp = gd::ColorSelectPopup::create(nullptr, getColorForPopup(darealbtn->id), 0, 0);
-				showPicker(lel, getColorForPopup(darealbtn->id), from<int *>(lel->getLevelSettingsObject( ), 0xF8));
+				//showPicker(lel, getColorForPopup(darealbtn->id), from<int *>(lel->getLevelSettingsObject( ), 0xF8));
+				auto edsp = EditColorSelectPopup::create(sco, darealbtn);
+				CCDirector::sharedDirector( )->getRunningScene( )->addChild(edsp);
 			}
 		}
 		else {
@@ -563,7 +772,6 @@ void MyCustomizeObjectLayer::onColorBtn(CCObject *btn) {
 
 bool MyCustomizeObjectLayer::init(gd::LevelEditorLayer *lel, CCArray *selObjs, gd::GameObject *selObj)
 {
-
 	CCLayer::init( );
 	CCLayerColor *cclcol = CCLayerColor::create(ccc4(0, 0, 0, 0));
 	cclcol->setZOrder(1);
@@ -602,54 +810,36 @@ bool MyCustomizeObjectLayer::init(gd::LevelEditorLayer *lel, CCArray *selObjs, g
 
 
 	auto levelSettingsObject = from<gd::LevelSettingsObject *>(lel, 0x190);
-	int *sco = from<int *>(levelSettingsObject, 0xE8);
+	gd::SettingsColorObject *sco = from<gd::SettingsColorObject *>(levelSettingsObject, 0xE8);
 	auto red = from<unsigned char>(sco, 0xE8);
 	auto green = from<unsigned char>(sco, 0xE9);
 	auto blue = from<unsigned char>(sco, 0xEA);
-
-	/*auto bgButton = ColorButtonSpriteExtra::create("BG", this, 0);
-	bgButton->btnSprite->setColor({ red, green, blue });
-
-	auto gButton = ColorButtonSpriteExtra::create("G", this, 0);
-	sco = from<int *>(levelSettingsObject, 0xEC);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	gButton->btnSprite->setColor({ red, green, blue });
-
-	auto lButton = ColorButtonSpriteExtra::create("L", this, 0);
-	sco = from<int *>(levelSettingsObject, 0xF0);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	lButton->btnSprite->setColor({ red, green, blue });
-
-	auto objButton = ColorButtonSpriteExtra::create("Obj", this, 0);
-	sco = from<int *>(levelSettingsObject, 0xF4);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	objButton->btnSprite->setColor({ red, green, blue });*/
 
 	auto wButton = ColorButtonSpriteExtra::create("White", this, 9, true);
 	wButton->btnSprite->setColor({ 255, 255, 255 });
 
 	auto dlButton = ColorButtonSpriteExtra::create("3DL", this, 8, false);
-	sco = from<int *>(levelSettingsObject, 0xF8);
+	sco = from<gd::SettingsColorObject *>(levelSettingsObject, 0xF8);
 	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
 	dlButton->btnSprite->setColor({ red, green, blue });
 
 	auto c1Button = ColorButtonSpriteExtra::create("1", this, 3, false);
-	sco = from<int *>(levelSettingsObject, 0xFC);
+	sco = from<gd::SettingsColorObject *>(levelSettingsObject, 0xFC);
 	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
 	c1Button->btnSprite->setColor({ red, green, blue });
 
 	auto c2Button = ColorButtonSpriteExtra::create("2", this, 4, false);
-	sco = from<int *>(levelSettingsObject, 0x100);
+	sco = from<gd::SettingsColorObject *>(levelSettingsObject, 0x100);
 	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
 	c2Button->btnSprite->setColor({ red, green, blue });
 
 	auto c3Button = ColorButtonSpriteExtra::create("3", this, 6, false);
-	sco = from<int *>(levelSettingsObject, 0x104);
+	sco = from<gd::SettingsColorObject*>(levelSettingsObject, 0x104);
 	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
 	c3Button->btnSprite->setColor({ red, green, blue });
 
 	auto c4Button = ColorButtonSpriteExtra::create("4", this, 7, false);
-	sco = from<int *>(levelSettingsObject, 0x108);
+	sco = from<gd::SettingsColorObject *>(levelSettingsObject, 0x108);
 	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
 	c4Button->btnSprite->setColor({ red, green, blue });
 
@@ -664,239 +854,11 @@ bool MyCustomizeObjectLayer::init(gd::LevelEditorLayer *lel, CCArray *selObjs, g
 	p2Button->btnSprite->setColor(lel->getPlayer1( )->getSecondColor( ));
 
 	auto lbgButton = ColorButtonSpriteExtra::create("LBG", this, 5, true);
-	sco = from<int *>(levelSettingsObject, 0xE8);
+	sco = from<gd::SettingsColorObject *>(levelSettingsObject, 0xE8);
 	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
 	lbgButton->btnSprite->setColor({ red, green, blue });
 	lbgButton->btnSprite->setOpacity(150);
 
-
-	/*auto bgBtnLabel = CCLabelBMFont::create("BG", "bigFont.fnt");
-	bgBtnLabel->setScale(0.33f);
-	bgBtnLabel->setZOrder(1);
-	auto bgBtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	auto levelSettingsObject = from<gd::LevelSettingsObject *>(lel, 0x190);
-	int *sco = from<int *>(levelSettingsObject, 0xE8);
-	auto red = from<unsigned char>(sco, 0xE8);
-	auto green = from<unsigned char>(sco, 0xE9);
-	auto blue = from<unsigned char>(sco, 0xEA);
-	bgBtnSprite->setColor({ red, green, blue });
-	auto bgBtn = gd::CCMenuItemSpriteExtra::create(bgBtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	bgBtn->addChild(bgBtnLabel);
-	bgBtnLabel->setPosition({ bgBtn->getContentSize( ).width/2, bgBtn->getContentSize( ).height/2 });
-	auto bgBtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	bgBtnSelect->setZOrder(1);
-	bgBtnSelect->setTag(100);
-	bgBtnSelect->setVisible(0);
-	bgBtn->addChild(bgBtnSelect);
-	bgBtnSelect->setPosition({ bgBtn->getContentSize( ).width/2, bgBtn->getContentSize( ).height/2 });
-	
-
-	auto gBtnLabel = CCLabelBMFont::create("G", "bigFont.fnt");
-	gBtnLabel->setScale(0.33f); gBtnLabel->setZOrder(1);
-	auto gBtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	sco = from<int *>(levelSettingsObject, 0xEC);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	gBtnSprite->setColor({ red, green, blue });
-	auto gBtn = gd::CCMenuItemSpriteExtra::create(gBtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	gBtn->addChild(gBtnLabel);
-	gBtnLabel->setPosition({ gBtn->getContentSize( ).width/2, gBtn->getContentSize( ).height/2 });
-	auto gBtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	gBtnSelect->setZOrder(1);
-	gBtnSelect->setTag(100);
-	gBtnSelect->setVisible(0);
-	gBtn->addChild(gBtnSelect);
-	gBtnSelect->setPosition({ gBtn->getContentSize( ).width/2, gBtn->getContentSize( ).height/2 });
-	
-
-	auto lBtnLabel = CCLabelBMFont::create("L", "bigFont.fnt");
-	lBtnLabel->setScale(0.33f); lBtnLabel->setZOrder(1);
-	auto lBtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	sco = from<int *>(levelSettingsObject, 0xF0);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	lBtnSprite->setColor({ red, green, blue });
-	auto lBtn = gd::CCMenuItemSpriteExtra::create(lBtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	lBtn->addChild(lBtnLabel);
-	lBtnLabel->setPosition({ lBtn->getContentSize( ).width/2, lBtn->getContentSize( ).height/2 });
-	auto lBtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	lBtnSelect->setZOrder(1);
-	lBtnSelect->setTag(100);
-	lBtnSelect->setVisible(0);
-	lBtn->addChild(lBtnSelect);
-	lBtnSelect->setPosition({ lBtn->getContentSize( ).width/2, lBtn->getContentSize( ).height/2 });
-	
-
-	auto objBtnLabel = CCLabelBMFont::create("Obj", "bigFont.fnt");
-	objBtnLabel->setScale(0.33f); objBtnLabel->setZOrder(1);
-	auto objBtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	sco = from<int *>(levelSettingsObject, 0xF4);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	objBtnSprite->setColor({ red, green, blue });
-	auto objBtn = gd::CCMenuItemSpriteExtra::create(objBtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	objBtn->addChild(objBtnLabel);
-	objBtnLabel->setPosition({ objBtn->getContentSize( ).width/2, objBtn->getContentSize( ).height/2 });
-	auto objBtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	objBtnSelect->setZOrder(1);
-	objBtnSelect->setTag(100);
-	objBtnSelect->setVisible(0);
-	objBtn->addChild(objBtnSelect);
-	objBtnSelect->setPosition({ objBtn->getContentSize( ).width/2, objBtn->getContentSize( ).height/2 });
-	
-
-	auto dlBtnLabel = CCLabelBMFont::create("3DL", "bigFont.fnt");
-	dlBtnLabel->setScale(0.33f); dlBtnLabel->setZOrder(1);
-	auto dlBtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	sco = from<int *>(levelSettingsObject, 0xF8);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	dlBtnSprite->setColor({ red, green, blue });
-	auto dlBtn = gd::CCMenuItemSpriteExtra::create(dlBtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	dlBtn->addChild(dlBtnLabel);
-	dlBtnLabel->setPosition({ dlBtn->getContentSize( ).width/2, dlBtn->getContentSize( ).height/2 });
-	auto dlBtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	dlBtnSelect->setZOrder(1);
-	dlBtnSelect->setTag(100);
-	dlBtnSelect->setVisible(0);
-	dlBtn->addChild(dlBtnSelect);
-	dlBtnSelect->setPosition({ dlBtn->getContentSize( ).width/2, dlBtn->getContentSize( ).height/2 });
-	
-
-	auto c1BtnLabel = CCLabelBMFont::create("1", "bigFont.fnt");
-	c1BtnLabel->setScale(0.33f); c1BtnLabel->setZOrder(1);
-	auto c1BtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	sco = from<int *>(levelSettingsObject, 0xFC);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	c1BtnSprite->setColor({ red, green, blue });
-	auto c1Btn = gd::CCMenuItemSpriteExtra::create(c1BtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	c1Btn->addChild(c1BtnLabel);
-	c1BtnLabel->setPosition({ c1Btn->getContentSize( ).width/2, c1Btn->getContentSize( ).height/2 });
-	auto c1BtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	c1BtnSelect->setZOrder(1);
-	c1BtnSelect->setTag(100);
-	c1BtnSelect->setVisible(0);
-	c1Btn->addChild(c1BtnSelect);
-	c1BtnSelect->setPosition({ c1Btn->getContentSize( ).width/2, c1Btn->getContentSize( ).height/2 });
-	
-
-	auto c2BtnLabel = CCLabelBMFont::create("2", "bigFont.fnt");
-	c2BtnLabel->setScale(0.33f); c2BtnLabel->setZOrder(1);
-	auto c2BtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	sco = from<int *>(levelSettingsObject, 0x100);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	c2BtnSprite->setColor({ red, green, blue });
-	auto c2Btn = gd::CCMenuItemSpriteExtra::create(c2BtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	c2Btn->addChild(c2BtnLabel);
-	c2BtnLabel->setPosition({ c2Btn->getContentSize( ).width/2, c2Btn->getContentSize( ).height/2 });
-	auto c2BtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	c2BtnSelect->setZOrder(1);
-	c2BtnSelect->setTag(100);
-	c2BtnSelect->setVisible(0);
-	c2Btn->addChild(c2BtnSelect);
-	c2BtnSelect->setPosition({ c2Btn->getContentSize( ).width/2, c2Btn->getContentSize( ).height/2 });
-	
-
-	auto c3BtnLabel = CCLabelBMFont::create("3", "bigFont.fnt");
-	c3BtnLabel->setScale(0.33f); c3BtnLabel->setZOrder(1);
-	auto c3BtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	sco = from<int *>(levelSettingsObject, 0x104);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	c3BtnSprite->setColor({ red, green, blue });
-	auto c3Btn = gd::CCMenuItemSpriteExtra::create(c3BtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	c3Btn->addChild(c3BtnLabel);
-	c3BtnLabel->setPosition({ c3Btn->getContentSize( ).width/2, c3Btn->getContentSize( ).height/2 });
-	auto c3BtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	c3BtnSelect->setZOrder(1);
-	c3BtnSelect->setTag(100);
-	c3BtnSelect->setVisible(0);
-	c3Btn->addChild(c3BtnSelect);
-	c3BtnSelect->setPosition({ c3Btn->getContentSize( ).width/2, c3Btn->getContentSize( ).height/2 });
-
-
-	auto c4BtnLabel = CCLabelBMFont::create("4", "bigFont.fnt");
-	c4BtnLabel->setScale(0.33f); c4BtnLabel->setZOrder(1);
-	auto c4BtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	sco = from<int *>(levelSettingsObject, 0x108);
-	red = from<unsigned char>(sco, 0xE8); green = from<unsigned char>(sco, 0xE9); blue = from<unsigned char>(sco, 0xEA);
-	c4BtnSprite->setColor({ red, green, blue });
-	auto c4Btn = gd::CCMenuItemSpriteExtra::create(c4BtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	c4Btn->addChild(c4BtnLabel);
-	c4BtnLabel->setPosition({ c4Btn->getContentSize( ).width/2, c4Btn->getContentSize( ).height/2 });
-	auto c4BtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	c4BtnSelect->setZOrder(1);
-	c4BtnSelect->setTag(100);
-	c4BtnSelect->setVisible(0);
-	c4Btn->addChild(c4BtnSelect);
-	c4BtnSelect->setPosition({ c4Btn->getContentSize( ).width/2, c4Btn->getContentSize( ).height/2 });
-	
-
-	auto defBtnLabel = CCLabelBMFont::create("Def", "bigFont.fnt");
-	defBtnLabel->setScale(0.33f); defBtnLabel->setZOrder(1);
-	auto defBtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	defBtnSprite->setColor({ 255, 255, 255 });
-	defBtnSprite->setOpacity(200);
-	auto defBtn = gd::CCMenuItemSpriteExtra::create(defBtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	defBtn->addChild(defBtnLabel);
-	defBtnLabel->setPosition({ defBtn->getContentSize( ).width/2, defBtn->getContentSize( ).height/2 });
-	auto defBtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	defBtnSelect->setZOrder(1);
-	defBtnSelect->setTag(100);
-	defBtnSelect->setVisible(0);
-	defBtn->addChild(defBtnSelect);
-	defBtnSelect->setPosition({ defBtn->getContentSize( ).width/2, defBtn->getContentSize( ).height/2 });
-
-
-	auto p1BtnLabel = CCLabelBMFont::create("P1", "bigFont.fnt");
-	p1BtnLabel->setScale(0.33f); p1BtnLabel->setZOrder(1);
-	auto p1BtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	p1BtnSprite->setColor(lel->getPlayer1( )->getFirstColor( ));
-	auto p1Btn = gd::CCMenuItemSpriteExtra::create(p1BtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	p1Btn->addChild(p1BtnLabel);
-	p1BtnLabel->setPosition({ p1Btn->getContentSize( ).width/2, p1Btn->getContentSize( ).height/2 });
-	auto p1BtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	p1BtnSelect->setZOrder(1);
-	p1BtnSelect->setTag(100);
-	p1BtnSelect->setVisible(0);
-	p1Btn->addChild(p1BtnSelect);
-	p1BtnSelect->setPosition({ p1Btn->getContentSize( ).width/2, p1Btn->getContentSize( ).height/2 });
-
-
-	auto p2BtnLabel = CCLabelBMFont::create("P2", "bigFont.fnt");
-	p2BtnLabel->setScale(0.33f); p2BtnLabel->setZOrder(1);
-	auto p2BtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	p2BtnSprite->setColor(lel->getPlayer1( )->getSecondColor( ));
-	auto p2Btn = gd::CCMenuItemSpriteExtra::create(p2BtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	p2Btn->addChild(p2BtnLabel);
-	p2BtnLabel->setPosition({ p2Btn->getContentSize( ).width/2, p2Btn->getContentSize( ).height/2 });
-	auto p2BtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	p2BtnSelect->setZOrder(1);
-	p2BtnSelect->setTag(100);
-	p2BtnSelect->setVisible(0);
-	p2Btn->addChild(p2BtnSelect);
-	p2BtnSelect->setPosition({ p2Btn->getContentSize( ).width/2, p2Btn->getContentSize( ).height/2 });
-	
-
-	auto lbgBtnLabel = CCLabelBMFont::create("LBG", "bigFont.fnt");
-	lbgBtnLabel->setScale(0.33f); lbgBtnLabel->setZOrder(1);
-	auto lbgBtnSprite = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-	lbgBtnSprite->setColor({
-		from<unsigned char>(from<int *>(from<gd::LevelSettingsObject *>(lel, 0x190), 232), 0xE8),
-		from<unsigned char>(from<int *>(from<gd::LevelSettingsObject *>(lel, 0x190), 232), 0xE9),
-		from<unsigned char>(from<int *>(from<gd::LevelSettingsObject *>(lel, 0x190), 232), 0xEA)
-	});
-	lbgBtnSprite->setOpacity(200);
-	auto lbgBtn = gd::CCMenuItemSpriteExtra::create(lbgBtnSprite, nullptr, this, menu_selector(MyCustomizeObjectLayer::onColorBtn));
-	lbgBtn->addChild(lbgBtnLabel);
-	lbgBtnLabel->setPosition({ lbgBtn->getContentSize( ).width/2, lbgBtn->getContentSize( ).height/2 });
-	auto lbgBtnSelect = CCSprite::createWithSpriteFrameName("GJ_select_001.png");
-	lbgBtnSelect->setZOrder(1);
-	lbgBtnSelect->setTag(100);
-	lbgBtnSelect->setVisible(0);
-	lbgBtn->addChild(lbgBtnSelect);
-	lbgBtnSelect->setPosition({ lbgBtn->getContentSize( ).width/2, lbgBtn->getContentSize( ).height/2 });*/
-
-
-	//colorsMenu->addChild(bgButton);
-	//colorsMenu->addChild(gButton);
-	//colorsMenu->addChild(lButton);
-	//colorsMenu->addChild(objButton);
 	colorsMenu->addChild(wButton);
 	colorsMenu->addChild(dlButton);
 	colorsMenu->addChild(c1Button);
@@ -1008,7 +970,7 @@ bool MyCustomizeObjectLayer::init(gd::LevelEditorLayer *lel, CCArray *selObjs, g
 	bg->setPosition((director->getScreenRight( ))/2, (director->getScreenTop( ))/2);
 	bg->setZOrder(2);
 	this->addChild(bg);
-	auto appearAction = CCEaseBackOut::create(CCScaleTo::create(.25f, 1.f));
+	auto appearAction = CCEaseElasticOut::create(CCScaleTo::create(.5f, 1.f), 0.6f);
 
 	cocos2d::extension::CCScale9Sprite *colorBtnBg = cocos2d::extension::CCScale9Sprite::create("square02_001.png");
 	colorBtnBg->setContentSize({ 220, 120 });

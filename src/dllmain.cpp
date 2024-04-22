@@ -254,8 +254,6 @@ bool __fastcall PlayLayer_init_H(gd::PlayLayer* self, void* edx, gd::GJGameLevel
 
     if (!PlayLayer_init(self, level)) return false;
 
-
-
     auto playerDrawNode = CCDrawNode::create();
     playerDrawNode->setZOrder(1000);
     playerDrawNode->setTag(124);
@@ -572,6 +570,9 @@ void __fastcall PlayLayer_update_H(gd::PlayLayer* self, void*, float dt)
     auto deathslbl = reinterpret_cast<CCLabelBMFont*>(self->getChildByTag(45713));
     auto clklbl = reinterpret_cast<CCLabelBMFont*>(self->getChildByTag(45714));
 
+
+    auto pixelSize = CCDirector::sharedDirector( )->getWinSizeInPixels( );
+    SetCursorPos( pixelSize.width/2, pixelSize.height/2);
 
     //Start Pos Switcher
     auto secarr = self->getSections();
@@ -1045,10 +1046,16 @@ void __fastcall EndLayer_init_H(CCLayer* self) {
 }
 
 bool(__thiscall* EditorUI_init)(gd::EditorUI* self, CCLayer* editor);
-bool __fastcall EditorUI_init_H(gd::EditorUI* self, void*, CCLayer* editor) {
+bool __fastcall EditorUI_init_H(gd::EditorUI *self, void *, CCLayer *editor) {
     PlayLayerObject = nullptr;
     editUI = self;
     bool result = EditorUI_init(self, editor);
+
+    auto rotationLabel = CCLabelBMFont::create("0", "bigFont.fnt");
+    rotationLabel->setScale(0.35f);
+    rotationLabel->setPosition({ 0, 30.f });
+    rotationLabel->setTag(1);
+    self->getGJRotationControl( )->addChild(rotationLabel);
 
     auto editSprite = CCSprite::createWithSpriteFrameName("GJ_editObjBtn_001.png");
     editUI->getEditObjectButton( )->setVisible(0);
@@ -1323,6 +1330,15 @@ void __fastcall Scheduler_update_H(CCScheduler* self, void* edx, float idk) {
                 dupclicateBtn->setEnabled(true);
             }
         }
+        if ( editUI->getSingleSelectedObj( ) ) {
+            if ( editUI->getSingleSelectedObj( )->getRotation( )<0 )
+                editUI->getSingleSelectedObj( )->setRotation(editUI->getSingleSelectedObj( )->getRotation( )+360);
+            if ( editUI->getSingleSelectedObj( )->getRotation( )>360 )
+                editUI->getSingleSelectedObj( )->setRotation(editUI->getSingleSelectedObj( )->getRotation( )-360);
+            reinterpret_cast< CCLabelBMFont * >(editUI->getGJRotationControl( )->getChildByTag(1))->setVisible(true);
+            reinterpret_cast< CCLabelBMFont * >(editUI->getGJRotationControl( )->getChildByTag(1))->setString(CCString::createWithFormat("%.0f%", editUI->getSingleSelectedObj( )->getRotation( ))->getCString( ));
+        }
+        else reinterpret_cast< CCLabelBMFont * >(editUI->getGJRotationControl( )->getChildByTag(1))->setVisible(false);
 
 
         if ( selobjgroup ) {
