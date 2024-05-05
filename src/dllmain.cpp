@@ -52,7 +52,7 @@ ccColor3B playerColor1;
 ccColor3B playerColor2;
 ccColor3B playerColorG;
 //CCLayer* PauseLayerObject;
-CCLayer* PlayLayerObject;
+gd::PlayLayer* PlayLayerObject;
 CCArray* startPosArr;
 gd::EditorUI* editUI;
 
@@ -87,22 +87,22 @@ void drawTriangleObj(CCDrawNode* drawer, gd::GameObject* ob, ccColor4F col) {
     auto point3 = ob->getOrientedBox()->getPoint3();
     auto point4 = ob->getOrientedBox()->getPoint4();
 
-    if (!isFlippedX && !isFlippedY) {
+    if (!isFlippedY && !isFlippedX) {
         triangle[0] = point1;
         triangle[1] = point2;
         triangle[2] = point3;
     }
-    else if (isFlippedX && !isFlippedY) {
+    else if (isFlippedY && !isFlippedX) {
         triangle[0] = point2;
         triangle[1] = point3;
         triangle[2] = point4;
     }
-    else if (!isFlippedX && isFlippedY) {
+    else if (!isFlippedY && isFlippedX) {
         triangle[0] = point1;
         triangle[1] = point2;
         triangle[2] = point4;
     }
-    else if (isFlippedX && isFlippedY) {
+    else if (isFlippedY && isFlippedX) {
         triangle[0] = point1;
         triangle[1] = point3;
         triangle[2] = point4;
@@ -571,12 +571,47 @@ void __fastcall PlayLayer_update_H(gd::PlayLayer* self, void*, float dt)
     auto clklbl = reinterpret_cast<CCLabelBMFont*>(self->getChildByTag(45714));
 
 
-    auto pixelSize = CCDirector::sharedDirector( )->getWinSizeInPixels( );
-    SetCursorPos( pixelSize.width/2, pixelSize.height/2);
+    //auto pixelSize = CCDirector::sharedDirector( )->getWinSizeInPixels( );
+    //SetCursorPos( pixelSize.width/2, pixelSize.height/2);
+
+    //Player Hiboxes
+    auto playerDrawNode = reinterpret_cast< CCDrawNode * >(self->layer( )->getChildByTag(124));
+    playerDrawNode->clear( );
+    if ( setting( ).onPlayerHitbox||(self->player1( )->getIsDead( )&&setting( ).onHitboxesOnDeath) )
+    {
+        if ( self->player1( ) )
+        {
+            drawPlayerHitbox(self->player1( ), playerDrawNode);
+        }
+        if ( self->player2( ) )
+        {
+            drawPlayerHitbox(self->player2( ), playerDrawNode);
+        }
+    }
+
+    //Object Hitboxes
+    auto secarr = self->getSections( );
+    auto arrcount = secarr->count( );
+    auto objDrawNode = reinterpret_cast< CCDrawNode * >(self->layer( )->getChildByTag(125));
+    objDrawNode->clear( );
+    if ( setting( ).onObjHitbox||(self->player1( )->getIsDead( )&&setting( ).onHitboxesOnDeath) )
+    {
+        for ( int i = self->getFirstVisibleSection( )+1; i<self->getLastVisibleSection( )-1; i++ )
+        {
+            if ( i<0 ) continue;
+            if ( i>=arrcount ) break;
+            auto objAtInd = secarr->objectAtIndex(i);
+            auto objarr = reinterpret_cast< CCArray * >(objAtInd);
+
+            for ( int j = 0; j<objarr->count( ); j++ )
+            {
+                auto obj = reinterpret_cast< gd::GameObject * >(objarr->objectAtIndex(j));
+                drawObjectHitbox(obj, objDrawNode);
+            }
+        }
+    }
 
     //Start Pos Switcher
-    auto secarr = self->getSections();
-    auto arrcount = secarr->count();
     if (spswitcherlbl)
     {
         auto fadeout = CCSequence::create(CCDelayTime::create(2.f), CCFadeOut::create(0.5f), nullptr);
@@ -626,41 +661,6 @@ void __fastcall PlayLayer_update_H(gd::PlayLayer* self, void*, float dt)
             spswitcherlbl->runAction(fadeout);
         }
         else if (!GetAsyncKeyState(0x25)) lKeyFlag = true;
-    }
-
-    //Player Hiboxes
-    auto playerDrawNode = reinterpret_cast<CCDrawNode*>(self->layer()->getChildByTag(124));
-    playerDrawNode->clear();
-    if (setting().onPlayerHitbox || (self->player1()->getIsDead() && setting().onHitboxesOnDeath))
-    {
-        if (self->player1())
-        {
-            drawPlayerHitbox(self->player1(), playerDrawNode);
-        }
-        if (self->player2())
-        {
-            drawPlayerHitbox(self->player2(), playerDrawNode);
-        }
-    }
-
-    //Object Hitboxes
-    auto objDrawNode = reinterpret_cast<CCDrawNode*>(self->layer()->getChildByTag(125));
-    objDrawNode->clear();
-    if (setting().onObjHitbox || (self->player1()->getIsDead() && setting().onHitboxesOnDeath))
-    {
-        for (int i = self->getFirstVisibleSection() + 1; i < self->getLastVisibleSection() - 1; i++)
-        {
-            if (i < 0) continue;
-            if (i >= arrcount) break;
-            auto objAtInd = secarr->objectAtIndex(i);
-            auto objarr = reinterpret_cast<CCArray*>(objAtInd);
-
-            for (int j = 0; j < objarr->count(); j++)
-            {
-                auto obj = reinterpret_cast<gd::GameObject*>(objarr->objectAtIndex(j));
-                drawObjectHitbox(obj, objDrawNode);
-            }
-        }
     }
 
 
@@ -1067,6 +1067,15 @@ bool __fastcall EditorUI_init_H(gd::EditorUI *self, void *, CCLayer *editor) {
     editMenu->addChild(editBtn);
     self->addChild(editMenu);
 
+    //auto groupIdSprite = CCSprite::createWithSpriteFrameName("GJ_groupIDBtn_001.png");
+    //editUI->getEditObjectButton( )->setVisible(0);
+    //groupIdSprite->setScale(0.85f);
+    //groupIdSprite->setPosition({ 23.46f, 24.225 });
+    //auto groupIdBtn = gd::CCMenuItemSpriteExtra::create(groupIdSprite, nullptr, self, menu_selector(MyCustomizeObjectLayer::onEdit));
+    //groupIdBtn->setPosition({ -52.f, -132.f });
+    //groupIdBtn->setTag(4582);
+    //editMenu->addChild(groupIdBtn);
+
     auto duplicateSprite = CCSprite::createWithSpriteFrameName("GJ_duplicateObjectBtn_001.png");
     editUI->getDuplicateButton()->setVisible(0);
     duplicateSprite->setScale(0.85f);
@@ -1288,6 +1297,44 @@ void __fastcall Scheduler_update_H(CCScheduler* self, void* edx, float idk) {
         //        iObj->setRotation(iObj->getRotation( )+1.f);
         //    }
         //}
+        if ( editUI->getLevelEditorLayer( ) ) {
+            //Player Hiboxes
+            auto playerDrawNode = reinterpret_cast< CCDrawNode * >(editUI->getLevelEditorLayer()->getDrawGridLayer( )->getParent( )->getChildByTag(124));
+            playerDrawNode->clear( );
+            if ( setting( ).onPlayerHitbox||(editUI->getLevelEditorLayer( )->getPlayer1( )->getIsDead( )&&setting( ).onHitboxesOnDeath) )
+            {
+                if ( editUI->getLevelEditorLayer( )->getPlayer1( ) )
+                {
+                    drawPlayerHitbox(editUI->getLevelEditorLayer( )->getPlayer1( ), playerDrawNode);
+                }
+                if ( editUI->getLevelEditorLayer( )->getPlayer2( ) )
+                {
+                    drawPlayerHitbox(editUI->getLevelEditorLayer( )->getPlayer2( ), playerDrawNode);
+                }
+            }
+
+            ////Object Hitboxes
+            auto secarr = editUI->getLevelEditorLayer( )->getLevelSections();
+            auto arrcount = secarr->count( );
+            auto objDrawNode = reinterpret_cast< CCDrawNode * >(editUI->getLevelEditorLayer( )->getDrawGridLayer( )->getParent( )->getChildByTag(125));
+            objDrawNode->clear( );
+            if ( setting( ).onObjHitbox||(editUI->getLevelEditorLayer( )->getPlayer1( )->getIsDead( )&&setting( ).onHitboxesOnDeath) )
+            {
+                for ( int i = 0; i<arrcount; i++ )
+                {
+                    if ( i<0 ) continue;
+                    if ( i>arrcount ) break;
+                    auto objAtInd = secarr->objectAtIndex(i);
+                    auto objarr = reinterpret_cast< CCArray * >(objAtInd);
+
+                    for ( int j = 0; j<objarr->count( ); j++ )
+                    {
+                        auto obj = reinterpret_cast< gd::GameObject * >(objarr->objectAtIndex(j));
+                        drawObjectHitbox(obj, objDrawNode);
+                    }
+                }
+            }
+        }
 
         if (setting().onHideEditorUI) editUI->setVisible(0);
         else editUI->setVisible(1);
@@ -1388,6 +1435,7 @@ void __fastcall Scheduler_update_H(CCScheduler* self, void* edx, float idk) {
 
     if (PlayLayerObject)
     {
+
         auto SafeModeLabel = reinterpret_cast<CCLabelBMFont*>(PlayLayerObject->getChildByTag(45710));
         auto CheatIndicatorLabel = reinterpret_cast<CCLabelBMFont*>(PlayLayerObject->getChildByTag(4572));
 
@@ -1573,6 +1621,38 @@ bool __fastcall ColorSelectPopup_init_H(gd::FLAlertLayer *self, void* edx, CCObj
     return true;
 }
 
+bool(__thiscall *LevelEditorLayer_init)(gd::LevelEditorLayer *self, CCObject *obj);
+bool __fastcall LevelEditorLayer_init_H(gd::LevelEditorLayer *self, void *edx, CCObject *obj) {
+    if ( !LevelEditorLayer_init(self, obj) ) return false;
+
+    auto playerDrawNode = CCDrawNode::create( );
+    playerDrawNode->setZOrder(1000);
+    playerDrawNode->setTag(124);
+    self->getDrawGridLayer()->getParent()->addChild(playerDrawNode);
+
+    auto objDrawNode = CCDrawNode::create( );
+    objDrawNode->setZOrder(1000);
+    objDrawNode->setTag(125);
+    self->getDrawGridLayer( )->getParent( )->addChild(objDrawNode);
+
+    return true;
+}
+
+
+bool(__thiscall *LevelCell_init)(CCLayer *self);
+bool __fastcall LevelCell_init_H(CCLayer *self) {
+    if ( !LevelCell_init(self) ) return false;
+    auto particle = CCParticleSystemQuad::create("donateIconEffect.plist"); 
+    particle->setPosition({ 25, 55 });
+    particle->setScale(0.6f);
+    particle->setZOrder(-1);
+    //if (reinterpret_cast<gd::GJGameLevel*>(self, 0x170)->getStars() > 0 )
+    //std::cout<<self<<std::endl;
+    //self->addChild(particle);
+    //reinterpret_cast<CCSprite*>(self->getChildren( )->objectAtIndex(3))->addChild(particle);
+    return true;
+}
+
 //bool(__thiscall *EditorUI_onDuplicate)(CCObject* obj);
 //void __fastcall EditorUI_onDuplicate_H(CCObject* obj) {
 //    auto eui = reinterpret_cast< gd::EditorUI * >(obj);
@@ -1619,8 +1699,8 @@ DWORD WINAPI thread_func(void* hModule) {
         reinterpret_cast<void**>(&PlayLayer_destroyPlayer));
 
 
-    AllocConsole();
-    freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
+    //AllocConsole();
+    //freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
 
     /*MH_CreateHook(
         reinterpret_cast<void*>(gd::base + 0x44864),
@@ -1752,6 +1832,16 @@ DWORD WINAPI thread_func(void* hModule) {
         reinterpret_cast<void*>(&MenuLayer_init_H),
         reinterpret_cast<void**>(&MenuLayer_init)); // note the &, this gets the address of the variable
 
+    MH_CreateHook(
+    reinterpret_cast< void * >(gd::base+0x300f0),
+    reinterpret_cast< void ** >(&LevelCell_init_H),
+    reinterpret_cast< void ** >(&LevelCell_init));
+    
+
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x8b830),
+        reinterpret_cast< void ** >(&LevelEditorLayer_init_H),
+        reinterpret_cast< void ** >(&LevelEditorLayer_init));
     MH_CreateHook(
         reinterpret_cast<void*>(gd::base + 0x3fc00),
         reinterpret_cast<void**>(&EditorUI_init_H),

@@ -173,23 +173,74 @@ protected:
 	}
 };
 
+//class DiffRateAlertProtocol : public gd::FLAlertLayerProtocol {
+//protected:
+//
+//	void FLAlert_Clicked(gd::FLAlertLayer* layer, bool btn2) override
+//	{
+//		if (btn2)
+//		{
+//			std::string readBufferStore;
+//			auto gameManager = gd::GameManager::sharedState();
+//			std::string udid = gameManager->getPlayerUDID();
+//			int levelid = level->m_levelID;
+//
+//			std::string postfield = "deviceId=" + udid + "&levelId=" + std::to_string(levelid) + "&diff=" + std::to_string(globalSelectedDiff) + "&featured=0";
+//
+//			curl_global_init(CURL_GLOBAL_ALL);
+//			curl = curl_easy_init();
+//			if (curl) {
+//				curl_easy_setopt(curl, CURLOPT_URL, "http://85.209.2.73:25568/AdminPanel/RateLevel");
+//				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postfield);
+//				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteCallback);
+//				curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+//				/* Perform the request, res will get the return code */
+//				res = curl_easy_perform(curl);
+//				/* Check for errors */
+//				if (res != CURLE_OK)
+//					fprintf(stderr, "curl_easy_perform() failed: %s\n",
+//						curl_easy_strerror(res));
+//
+//				curl_easy_cleanup(curl);
+//			}
+//			curl_global_cleanup();
+//			std::cout << "DIFF RATE PROTOCOL" << std::endl;
+//			std::cout << readBuffer << std::endl;
+//			std::cout << levelid << std::endl;
+//			std::cout << globalSelectedDiff << " - diff" << std::endl;
+//			if (readBuffer == "1" ) gd::FLAlertLayer::create(nullptr, "Success!", "Level now has <cy>difficulty</c>!", "Ok", nullptr, 240.f, false, 0)->show();
+//			else if (readBuffer == "-1")  gd::FLAlertLayer::create(nullptr, "Failure.", "You have no permissions to give difficulties.", "Ok", nullptr, 260.f, false, 0)->show();
+//			else if (readBuffer == "-2") gd::FLAlertLayer::create(nullptr, "Failure.", "Level does not exist on servers.", "Ok", nullptr, 260.f, false, 0)->show();
+//			else gd::FLAlertLayer::create(nullptr, "Something went wrong...", "You have no internet connection or servers are down.", "Ok", nullptr, 300.f, false, 0)->show();
+//			std::cout << "STRING - " << postfield << std::endl << std::endl;
+//			readBuffer.clear();
+//			rateLayer->removeMeAndCleanup();
+//			rateLayer = nullptr;
+//
+//
+//
+//			//gd::GameLevelManager::sharedState()->levelUpdate(level);
+//		}
+//	}
+//};
+
 class StarRateAlertProtocol : public gd::FLAlertLayerProtocol {
 protected:
 
-	void FLAlert_Clicked(gd::FLAlertLayer* layer, bool btn2) override
+	void FLAlert_Clicked(gd::FLAlertLayer *layer, bool btn2) override
 	{
-		if (btn2)
+		if ( btn2 )
 		{
 			std::string readBufferStore;
-			auto gameManager = gd::GameManager::sharedState();
-			std::string udid = gameManager->getPlayerUDID();
+			auto gameManager = gd::GameManager::sharedState( );
+			std::string udid = gameManager->getPlayerUDID( );
 			int levelid = level->m_levelID;
 
-			std::string postfield = "deviceId=" + udid + "&levelId=" + std::to_string(levelid) + "&stars=" + std::to_string(globalSelectedStars) + "&diff=" + std::to_string(globalSelectedDiff) + "&featured=0";
+			std::string postfield = "deviceId="+udid+"&levelId="+std::to_string(levelid)+"&stars="+std::to_string(globalSelectedStars)+"&diff="+std::to_string(globalSelectedDiff)+"&featured=0";
 
 			curl_global_init(CURL_GLOBAL_ALL);
-			curl = curl_easy_init();
-			if (curl) {
+			curl = curl_easy_init( );
+			if ( curl ) {
 				curl_easy_setopt(curl, CURLOPT_URL, "http://85.209.2.73:25568/AdminPanel/RateLevel");
 				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postfield);
 				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteCallback);
@@ -197,25 +248,25 @@ protected:
 				/* Perform the request, res will get the return code */
 				res = curl_easy_perform(curl);
 				/* Check for errors */
-				if (res != CURLE_OK)
+				if ( res!=CURLE_OK )
 					fprintf(stderr, "curl_easy_perform() failed: %s\n",
 						curl_easy_strerror(res));
 
 				curl_easy_cleanup(curl);
 			}
-			curl_global_cleanup();
-			std::cout << "STAR RATE PROTOCOL" << std::endl;
-			std::cout << readBuffer << std::endl;
-			std::cout << levelid << std::endl;
-			std::cout << globalSelectedStars << " - stars" << std::endl;
-			std::cout << globalSelectedDiff << " - diff" << std::endl;
-			if (readBuffer == "1" ) gd::FLAlertLayer::create(nullptr, "Rated!", "Level is <cy>star rated</c>!", "Ok", nullptr, 240.f, false, 0)->show();
-			else if (readBuffer == "-1")  gd::FLAlertLayer::create(nullptr, "Rate failure.", "You have no permissions to rate levels.", "Ok", nullptr, 260.f, false, 0)->show();
-			else if (readBuffer == "-2") gd::FLAlertLayer::create(nullptr, "Rate failure.", "Level does not exist on servers.", "Ok", nullptr, 260.f, false, 0)->show();
-			else gd::FLAlertLayer::create(nullptr, "Something went wrong...", "You have no internet connection or servers are down.", "Ok", nullptr, 300.f, false, 0)->show();
-			std::cout << "STRING - " << postfield << std::endl << std::endl;
-			readBuffer.clear();
-			rateLayer->removeMeAndCleanup();
+			curl_global_cleanup( );
+			std::cout<<"STAR RATE PROTOCOL"<<std::endl;
+			std::cout<<readBuffer<<std::endl;
+			std::cout<<levelid<<std::endl;
+			std::cout<<globalSelectedStars<<" - stars"<<std::endl;
+			std::cout<<globalSelectedDiff<<" - diff"<<std::endl;
+			if ( readBuffer=="1" ) gd::FLAlertLayer::create(nullptr, "Rated!", "Level is <cy>star rated</c>!", "Ok", nullptr, 240.f, false, 0)->show( );
+			else if ( readBuffer=="-1" )  gd::FLAlertLayer::create(nullptr, "Rate failure.", "You have no permissions to rate levels.", "Ok", nullptr, 260.f, false, 0)->show( );
+			else if ( readBuffer=="-2" ) gd::FLAlertLayer::create(nullptr, "Rate failure.", "Level does not exist on servers.", "Ok", nullptr, 260.f, false, 0)->show( );
+			else gd::FLAlertLayer::create(nullptr, "Something went wrong...", "You have no internet connection or servers are down.", "Ok", nullptr, 300.f, false, 0)->show( );
+			std::cout<<"STRING - "<<postfield<<std::endl<<std::endl;
+			readBuffer.clear( );
+			rateLayer->removeMeAndCleanup( );
 			rateLayer = nullptr;
 
 
@@ -378,6 +429,7 @@ protected:
 UnrateAlertProtocol unrateProtocol;
 DeleteAlertProtocol deleteProtocol;
 BlockAlertProtocol blockProtocol;
+//DiffRateAlertProtocol diffProtocol;
 StarRateAlertProtocol starProtocol;
 FeaturedAlertProtocol featureProtocol;
 AddToHofAlertProtocol addToHofProtocol;

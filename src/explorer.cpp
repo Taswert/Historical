@@ -107,8 +107,10 @@ void render_node_properties(CCNode* node) {
         ImGui::InputInt("Z Order", &value);
         if (value != node->getZOrder()) node->setZOrder(value);
     }
-    if (auto rgba = dynamic_cast<CCNodeRGBA*>(node)) {
-        const auto color = rgba->getColor();
+
+    auto rgba = dynamic_cast< CCRGBAProtocol * >(node);
+    if ( rgba ) {
+        const auto color = rgba->getColor( );
         float colors[4] = { color.r / 255.f, color.g / 255.f, color.b / 255.f, rgba->getOpacity() / 255.f};
         if ( ImGui::ColorEdit4("Color", colors) ) {
             rgba->setColor(ccc3(colors[0]*255.f, colors[1]*255.f, colors[2]*255.f));

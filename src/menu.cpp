@@ -1943,8 +1943,8 @@ void RenderMain() {
                 }
                 
 
-                ImGui::DragFloat("UI Size", &setting().UISize, 0.01f, 1.f, 3.25f);
-                if (setting().UISize < 1.f) setting().UISize = 1.f;
+                ImGui::DragFloat("UI Size", &setting().UISize, 0.01f, 0.5f, 3.25f);
+                if (setting().UISize < 0.5f) setting().UISize = 0.5f;
                 if (setting().UISize > 3.25f) setting().UISize = 3.25f;
                 
                 ImGui::Checkbox("Auto Save Hacks", &setting().onAutoSave);
@@ -1955,10 +1955,11 @@ void RenderMain() {
                     gd::FLAlertLayer::create(nullptr, "Saved!", "Your hack state is saved!", "Ok", nullptr, 240.f, false, 0)->show();
                 }
                 ImGui::EndTabItem();
+                ImGui::Checkbox("Cocos Explorer", &setting( ).onExplorer);
                 if (GetAsyncKeyState(0x34) && GetAsyncKeyState(0x37))
                 {
                     ImGui::Checkbox("Debug Labels", &setting().onDebugLabels);
-                    ImGui::Checkbox("Cocos Explorer", &setting( ).onExplorer);
+                    
                 }
                 //ImGui::Checkbox("ZA WARUDO", &setting().onTimeStop);
             }
@@ -1967,7 +1968,7 @@ void RenderMain() {
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
         {
             ImGui::SetWindowFontScale(setting().UISize);
-            ImGui::Text("Historical Hack V4.5");
+            ImGui::Text("Historical Hack V4.63");
             ImGui::Text("Made by Taswert!");
             ImGui::Text("Thanks to Rainix for GUI and other help!");
             ImGui::Text("Special thanks to mgostiH, Mat, Pololak,");

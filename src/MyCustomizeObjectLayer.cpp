@@ -87,7 +87,12 @@ public:
 
 	virtual void unselected( ) override {
 		this->stopActionByTag(0);
-		auto actionInterval = cocos2d::CCScaleTo::create(0.0, 1.f);
+		float f = 0.f;
+		
+		//if (this->) {
+		//	f = 0.4f;
+		//}
+		auto actionInterval = cocos2d::CCScaleTo::create(f, 1.f);
 		auto action = cocos2d::CCEaseBounceOut::create(actionInterval);
 		action->setTag(0);
 		this->runAction(action);
@@ -437,13 +442,13 @@ public:
 		colorBtnBg->setZOrder(2);
 		this->addChild(colorBtnBg);
 
-		
+
 
 		auto selColLbl = CCLabelBMFont::create("Select Color", "goldFont.fnt");
 		selColLbl->setZOrder(3);
-		selColLbl->setPosition(director->getScreenRight( )/2, director->getScreenTop( )/2 + 130.f);
+		selColLbl->setPosition(director->getScreenRight( )/2, director->getScreenTop( )/2+130.f);
 		this->addChild(selColLbl);
-		
+
 
 
 		auto mainMenu = CCMenu::create( );
@@ -462,7 +467,7 @@ public:
 
 		auto pasteSprite = gd::ButtonSprite::create("Paste", 40, 0, 2.5f, true, "goldFont.fnt", "GJ_button_04.png", 30.0);
 		auto pasteButton = gd::CCMenuItemSpriteExtra::create(pasteSprite, nullptr, this, menu_selector(MultipleColorSelectPopup::onPasteColor));
-		pasteButton->setPosition({ -50.f + director->getScreenRight() / 2, -70.f+director->getScreenTop( )/2 });
+		pasteButton->setPosition({ -50.f+director->getScreenRight( )/2, -70.f+director->getScreenTop( )/2 });
 		mainMenu->addChild(pasteButton);
 
 
@@ -501,9 +506,9 @@ public:
 			if ( firstTTbool!=singleObj->getTouchTriggered( ) ) {
 				mixedTT = true; TTbool = false;
 			}
-			if ( firstCol.r!=singleObj->getTriggerColor( ).r || 
-				 firstCol.g!=singleObj->getTriggerColor( ).g  ||
-				 firstCol.b!=singleObj->getTriggerColor( ).b) {
+			if ( firstCol.r!=singleObj->getTriggerColor( ).r||
+				 firstCol.g!=singleObj->getTriggerColor( ).g||
+				 firstCol.b!=singleObj->getTriggerColor( ).b ) {
 				mixedCol = true;
 			}
 		}
@@ -650,7 +655,7 @@ public:
 	void P1Callback(CCObject *) {
 		P1bool = !P1bool;
 		P2bool = false;
-		reinterpret_cast< gd::CCMenuItemToggler * >(getChildByTag(5)->getChildByTag(2))->toggle(false);\
+		reinterpret_cast< gd::CCMenuItemToggler * >(getChildByTag(5)->getChildByTag(2))->toggle(false);
 		mixedP1 = false;
 	}
 

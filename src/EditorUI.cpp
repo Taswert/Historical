@@ -72,6 +72,18 @@ void EditorUI::Callback::onDuplicate(CCObject *obj) {
         newObj->setTouchTriggered(object->getTouchTriggered( ));
         newObj->setTintGround(object->getTintGround( ));
 
+        newObj->setIsFlippedX(object->getIsFlippedX());
+        newObj->setIsFlippedY(object->getIsFlippedY());
+
+        reinterpret_cast<cocos2d::CCSprite*>(newObj)->setFlipX(object->getIsFlippedX( ));
+        reinterpret_cast< cocos2d::CCSprite * >(newObj)->setFlipY(object->getIsFlippedY( ));
+        if ( newObj->getChildren( ) ) {
+            reinterpret_cast< cocos2d::CCSprite * >(newObj->getChildren( )->objectAtIndex(0))->setFlipX(object->getIsFlippedX( ));
+            reinterpret_cast< cocos2d::CCSprite * >(newObj->getChildren( )->objectAtIndex(0))->setFlipY(object->getIsFlippedY( ));
+        }
+        
+        newObj->updateOrientedBox( );
+
         postDuplicated->addObject(newObj);
         auto dgl = lel->getDrawGridLayer( );
         if ( newObj->getIsPreviewEnabled() && gamemodePortals.contains(newObj->getObjectID( )) ) {
