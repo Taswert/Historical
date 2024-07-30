@@ -889,8 +889,8 @@ public:
             setting().roleType = 0;
         }
         else gd::FLAlertLayer::create(nullptr, "Something went wrong...", "You have no internet connection or servers are down.", "Ok", nullptr, 300.f, false, 0)->show();
-        std::cout << "ADMIN CHECK PROTOCOL" << std::endl;
-        std::cout << readBuffer << std::endl;
+        //std::cout << "ADMIN CHECK PROTOCOL" << std::endl;
+        //std::cout << readBuffer << std::endl;
         //std::cout << udid << " - User device id" << std::endl << std::endl;
         readBuffer.clear();
     }
@@ -923,9 +923,9 @@ void adminInitCheck()
     else if (readBuffer == "3") setting().roleType = 3;
     else if (readBuffer == "4") setting().roleType = 4;
     else if (readBuffer == "-1") setting().roleType = 0;
-    std::cout << "ADMIN INIT CHECK PROTOCOL" << std::endl;
+    //std::cout << "ADMIN INIT CHECK PROTOCOL" << std::endl;
     //std::cout << postfield << std::endl;
-    std::cout << readBuffer << std::endl;
+    //std::cout << readBuffer << std::endl;
     //std::cout << udid << " - User device id" << std::endl << std::endl;
 
 
@@ -956,6 +956,8 @@ bool __fastcall MenuLayer_init_H(CCLayer* self, void*) {
     menu->addChild(adminCheckButton);
     menu->setPosition((CCDirector::sharedDirector()->getScreenRight()) - 25, (CCDirector::sharedDirector()->getScreenTop()) - 25);
     self->addChild(menu);
+
+    //std::cout<<gd::GameManager::sharedState( )->getPlayerUDID( )<<std::endl;
 
     return true;
 }
@@ -1085,11 +1087,11 @@ bool __fastcall EditorUI_init_H(gd::EditorUI *self, void *, CCLayer *editor) {
     duplicateBtn->setTag(4581);
     editMenu->addChild(duplicateBtn);
 
-    auto colIncSprite = CCSprite::createWithSpriteFrameName("player_special_02_001.png");
-    auto colIncBtn = gd::CCMenuItemSpriteExtra::create(colIncSprite, nullptr, self, menu_selector(MyCustomizeObjectLayer::onColInc));
-    colIncBtn->setPosition({ -100.f, -60.f });
-    if (setting().onDebugLabels)
-        editMenu->addChild(colIncBtn);
+    //auto colIncSprite = CCSprite::createWithSpriteFrameName("player_special_02_001.png");
+    //auto colIncBtn = gd::CCMenuItemSpriteExtra::create(colIncSprite, nullptr, self, menu_selector(MyCustomizeObjectLayer::onColInc));
+    //colIncBtn->setPosition({ -100.f, -60.f });
+    //if (setting().onDebugLabels)
+    //    editMenu->addChild(colIncBtn);
 
     auto leftiestLayerSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
     leftiestLayerSprite->setScale(0.5f);
@@ -1297,44 +1299,6 @@ void __fastcall Scheduler_update_H(CCScheduler* self, void* edx, float idk) {
         //        iObj->setRotation(iObj->getRotation( )+1.f);
         //    }
         //}
-        if ( editUI->getLevelEditorLayer( ) ) {
-            //Player Hiboxes
-            auto playerDrawNode = reinterpret_cast< CCDrawNode * >(editUI->getLevelEditorLayer()->getDrawGridLayer( )->getParent( )->getChildByTag(124));
-            playerDrawNode->clear( );
-            if ( setting( ).onPlayerHitbox||(editUI->getLevelEditorLayer( )->getPlayer1( )->getIsDead( )&&setting( ).onHitboxesOnDeath) )
-            {
-                if ( editUI->getLevelEditorLayer( )->getPlayer1( ) )
-                {
-                    drawPlayerHitbox(editUI->getLevelEditorLayer( )->getPlayer1( ), playerDrawNode);
-                }
-                if ( editUI->getLevelEditorLayer( )->getPlayer2( ) )
-                {
-                    drawPlayerHitbox(editUI->getLevelEditorLayer( )->getPlayer2( ), playerDrawNode);
-                }
-            }
-
-            ////Object Hitboxes
-            auto secarr = editUI->getLevelEditorLayer( )->getLevelSections();
-            auto arrcount = secarr->count( );
-            auto objDrawNode = reinterpret_cast< CCDrawNode * >(editUI->getLevelEditorLayer( )->getDrawGridLayer( )->getParent( )->getChildByTag(125));
-            objDrawNode->clear( );
-            if ( setting( ).onObjHitbox||(editUI->getLevelEditorLayer( )->getPlayer1( )->getIsDead( )&&setting( ).onHitboxesOnDeath) )
-            {
-                for ( int i = 0; i<arrcount; i++ )
-                {
-                    if ( i<0 ) continue;
-                    if ( i>arrcount ) break;
-                    auto objAtInd = secarr->objectAtIndex(i);
-                    auto objarr = reinterpret_cast< CCArray * >(objAtInd);
-
-                    for ( int j = 0; j<objarr->count( ); j++ )
-                    {
-                        auto obj = reinterpret_cast< gd::GameObject * >(objarr->objectAtIndex(j));
-                        drawObjectHitbox(obj, objDrawNode);
-                    }
-                }
-            }
-        }
 
         if (setting().onHideEditorUI) editUI->setVisible(0);
         else editUI->setVisible(1);
@@ -1638,20 +1602,88 @@ bool __fastcall LevelEditorLayer_init_H(gd::LevelEditorLayer *self, void *edx, C
     return true;
 }
 
+bool(__thiscall *LevelEditorLayer_update)(gd::LevelEditorLayer *self, float dt);
+void __fastcall LevelEditorLayer_update_H(gd::LevelEditorLayer *self, void *, float dt) {
+    LevelEditorLayer_update(self, dt);
+    //Player Hiboxes
+    auto playerDrawNode = reinterpret_cast< CCDrawNode * >(self->getDrawGridLayer( )->getParent( )->getChildByTag(124));
+    playerDrawNode->clear( );
+    if ( setting( ).onPlayerHitbox||(self->getPlayer1( )->getIsDead( )&&setting( ).onHitboxesOnDeath) )
+    {
+        if ( self->getPlayer1( ) )
+        {
+            drawPlayerHitbox(self->getPlayer1( ), playerDrawNode);
+        }
+        if ( self->getPlayer2( ) )
+        {
+            drawPlayerHitbox(self->getPlayer2( ), playerDrawNode);
+        }
+    }
 
-bool(__thiscall *LevelCell_init)(CCLayer *self);
-bool __fastcall LevelCell_init_H(CCLayer *self) {
-    if ( !LevelCell_init(self) ) return false;
-    auto particle = CCParticleSystemQuad::create("donateIconEffect.plist"); 
-    particle->setPosition({ 25, 55 });
-    particle->setScale(0.6f);
-    particle->setZOrder(-1);
-    //if (reinterpret_cast<gd::GJGameLevel*>(self, 0x170)->getStars() > 0 )
-    //std::cout<<self<<std::endl;
-    //self->addChild(particle);
-    //reinterpret_cast<CCSprite*>(self->getChildren( )->objectAtIndex(3))->addChild(particle);
-    return true;
+    ////Object Hitboxes
+    auto secarr = self->getLevelSections( );
+    auto arrcount = secarr->count( );
+    auto objDrawNode = reinterpret_cast< CCDrawNode * >(self->getDrawGridLayer( )->getParent( )->getChildByTag(125));
+    objDrawNode->clear( );
+    if ( setting( ).onObjHitbox||(self->getPlayer1( )->getIsDead( )&&setting( ).onHitboxesOnDeath) )
+    {
+        for ( int i = 0; i<arrcount; i++ )
+        {
+            if ( i<0 ) continue;
+            if ( i>arrcount ) break;
+            auto objAtInd = secarr->objectAtIndex(i);
+            auto objarr = reinterpret_cast< CCArray * >(objAtInd);
+
+            for ( int j = 0; j<objarr->count( ); j++ )
+            {
+                auto obj = reinterpret_cast< gd::GameObject * >(objarr->objectAtIndex(j));
+                drawObjectHitbox(obj, objDrawNode);
+            }
+        }
+    }
 }
+
+
+bool(__thiscall *LevelCell_loadCustomLevelCell)(CCLayer *self);
+void __fastcall LevelCell_loadCustomLevelCell_H(CCLayer *self) {
+    LevelCell_loadCustomLevelCell(self);
+    //auto particle = CCParticleSystemQuad::create("donateIconEffect.plist");
+    //auto cclcol = from<CCLayerColor*>(self, 0x168);
+    //cclcol->setColor({ 130, 50, 150 });
+    //auto sprite = reinterpret_cast< CCSprite * >(self->getChildren( )->objectAtIndex(3));
+    //particle->setPosition({ sprite->getContentSize().width / 2, 30});
+    //particle->setScale(0.6f);
+    //particle->setZOrder(-1);
+    //particle->setPositionType(kCCPositionTypeGrouped);
+    //if (from<gd::GJGameLevel*>(self, 0x170)->getStars() > 0 ) //Проверка на донат и скорее всего на рейт
+    //    sprite->addChild(particle);
+    //reinterpret_cast<CCSprite*>(self->getChildren( )->objectAtIndex(3))->addChild(particle);
+}
+
+bool(__thiscall *LevelCell_updateBGColor)(CCLayer *self, int index);
+void __fastcall LevelCell_updateBGColor_H(CCLayer *self, void* edx, int index) {
+    LevelCell_updateBGColor(self, index);
+    //auto cclcol = from<CCLayerColor *>(self, 0x168);
+    //int r = rand( );
+    //if ( r%100<50 ) { //Проверка на донат
+    //    if ( index%2==0 ) cclcol->setColor({ 130, 50, 150 });
+    //    else cclcol->setColor({ 170, 90, 190 });
+    //}
+    //reinterpret_cast<CCSprite*>(self->getChildren( )->objectAtIndex(3))->addChild(particle);
+}
+
+//bool(__thiscall *LevelCell_loadFromLevel)(CCLayer *self, gd::GJGameLevel *lvl);
+//void __fastcall LevelCell_loadFromLevel_H(CCLayer *self, void* edx, gd::GJGameLevel* lvl) {
+//    LevelCell_loadFromLevel(self, lvl);
+//    //auto particle = CCParticleSystemQuad::create("donateIconEffect.plist");
+//    //particle->setPosition({ 25, 55 });
+//    //particle->setScale(0.6f);
+//    //particle->setZOrder(-1);
+//    //if ( reinterpret_cast< gd::GJGameLevel * >(self, 0x170)->getStars( )>0 )
+//        //std::cout<<self<<std::endl;
+//        //self->addChild(particle);
+//    //reinterpret_cast<CCSprite*>(self->getChildren( )->objectAtIndex(3))->addChild(particle);
+//}
 
 //bool(__thiscall *EditorUI_onDuplicate)(CCObject* obj);
 //void __fastcall EditorUI_onDuplicate_H(CCObject* obj) {
@@ -1667,9 +1699,8 @@ bool __fastcall LevelCell_init_H(CCLayer *self) {
     //}
 //}
 
-
 DWORD WINAPI thread_func(void* hModule) {
-    WriteProcessMemory(GetCurrentProcess(), reinterpret_cast<void*>(gd::base + 0x3A21B), "\xB8\x01\x00\x00\x00\x90\x90", 7, NULL);
+    WriteProcessMemory(GetCurrentProcess(), reinterpret_cast<void*>(gd::base + 0x3A21B), "\xB8\x01\x00\x00\x00\x90\x90", 7, NULL); //play music button
 
     WriteProcessMemory(GetCurrentProcess(), reinterpret_cast<void*>(0x49bfab), "\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 11, NULL); //LevelInfoLayer init (deleting info icon)
 
@@ -1685,18 +1716,7 @@ DWORD WINAPI thread_func(void* hModule) {
         FreeLibraryAndExitThread(reinterpret_cast<HMODULE>(hModule), 0);
     }
 
-    MH_CreateHook(
-        reinterpret_cast< void * >(gd::base+0x29b60),
-        reinterpret_cast< void * >(&ColorSelectPopup_init_H),
-        reinterpret_cast< void ** >(&ColorSelectPopup_init));
-    //0xd6040 PlayBTN
-    //0xd61b0 EditBTN
-    //0xd64c0 MenuBTN!
-
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xee990),
-        reinterpret_cast<void*>(&PlayLayer_destroyPlayer_H),
-        reinterpret_cast<void**>(&PlayLayer_destroyPlayer));
+    
 
 
     //AllocConsole();
@@ -1711,145 +1731,175 @@ DWORD WINAPI thread_func(void* hModule) {
         reinterpret_cast<void*>(gd::base + 0x2cd53),
         CreatorLayer::CreatorLayer_menu_H,
         reinterpret_cast<void**>(&CreatorLayer::CreatorLayer_menu));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x2cc30),
-        CreatorLayer::CreatorLayer_init_H,
-        reinterpret_cast<void**>(&CreatorLayer::CreatorLayer_init));
-    MH_CreateHook(
-        reinterpret_cast< void * >(gd::base + 0x74f60),
-        reinterpret_cast< void * >(&EditorColorSetter_H),
-        reinterpret_cast< void ** >(&EditorColorSetter));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x44864),
-        reinterpret_cast<void*>(&ObjectToolboxAdd_RampTab_H),
-        reinterpret_cast<void**>(&ObjectToolboxAdd_RampTab));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x44e99),
-        reinterpret_cast<void*>(&ObjectToolboxAdd_SpikesTab_H),
-        reinterpret_cast<void**>(&ObjectToolboxAdd_SpikesTab));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x45e4b),
-        reinterpret_cast<void*>(&ObjectToolboxAdd_DecoSpikesTab_H),
-        reinterpret_cast<void**>(&ObjectToolboxAdd_DecoSpikesTab));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x463d6),
-        reinterpret_cast<void*>(&ObjectToolboxAdd_ChainTab_H),
-        reinterpret_cast<void**>(&ObjectToolboxAdd_ChainTab));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x46c37),
-        reinterpret_cast<void*>(&ObjectToolboxAdd_TriggerTab_H),
-        reinterpret_cast<void**>(&ObjectToolboxAdd_TriggerTab));
-
-
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x7bd90),
-        reinterpret_cast<void*>(&GarageLayer_init_H),
-        reinterpret_cast<void**>(&GarageLayer_init));
-
 
     auto cocos = GetModuleHandleA("libcocos2d.dll");
 
     MH_CreateHook(
-        reinterpret_cast<void*>(GetProcAddress(cocos, "?dispatchKeyboardMSG@CCKeyboardDispatcher@cocos2d@@QAE_NW4enumKeyCodes@2@_N@Z")),
-        reinterpret_cast<void**>(&CCKeyboardDispatcher_dispatchKeyboardMSG_H),
-        reinterpret_cast<void**>(&CCKeyboardDispatcher_dispatchKeyboardMSG));
+        reinterpret_cast< void * >(gd::base+0x29b60),
+        reinterpret_cast< void * >(&ColorSelectPopup_init_H),
+        reinterpret_cast< void ** >(&ColorSelectPopup_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xee990),
+        reinterpret_cast< void * >(&PlayLayer_destroyPlayer_H),
+        reinterpret_cast< void ** >(&PlayLayer_destroyPlayer));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x2cc30),
+        CreatorLayer::CreatorLayer_init_H,
+        reinterpret_cast< void ** >(&CreatorLayer::CreatorLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x74f60),
+        reinterpret_cast< void * >(&EditorColorSetter_H),
+        reinterpret_cast< void ** >(&EditorColorSetter));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x44864),
+        reinterpret_cast< void * >(&ObjectToolboxAdd_RampTab_H),
+        reinterpret_cast< void ** >(&ObjectToolboxAdd_RampTab));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x44e99),
+        reinterpret_cast< void * >(&ObjectToolboxAdd_SpikesTab_H),
+        reinterpret_cast< void ** >(&ObjectToolboxAdd_SpikesTab));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x45e4b),
+        reinterpret_cast< void * >(&ObjectToolboxAdd_DecoSpikesTab_H),
+        reinterpret_cast< void ** >(&ObjectToolboxAdd_DecoSpikesTab));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x463d6),
+        reinterpret_cast< void * >(&ObjectToolboxAdd_ChainTab_H),
+        reinterpret_cast< void ** >(&ObjectToolboxAdd_ChainTab));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x46c37),
+        reinterpret_cast< void * >(&ObjectToolboxAdd_TriggerTab_H),
+        reinterpret_cast< void ** >(&ObjectToolboxAdd_TriggerTab));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x7bd90),
+        reinterpret_cast< void * >(&GarageLayer_init_H),
+        reinterpret_cast< void ** >(&GarageLayer_init));
 
     MH_CreateHook(
-        reinterpret_cast<void*>(GetProcAddress(cocos, "?end@CCDirector@cocos2d@@QAEXXZ")),
-        reinterpret_cast<void**>(&CCDirector_end_H),
-        reinterpret_cast<void**>(&CCDirector_end));
+        reinterpret_cast< void * >(GetProcAddress(cocos, "?dispatchKeyboardMSG@CCKeyboardDispatcher@cocos2d@@QAE_NW4enumKeyCodes@2@_N@Z")),
+        reinterpret_cast< void ** >(&CCKeyboardDispatcher_dispatchKeyboardMSG_H),
+        reinterpret_cast< void ** >(&CCKeyboardDispatcher_dispatchKeyboardMSG));
+
+    MH_CreateHook(
+        reinterpret_cast< void * >(GetProcAddress(cocos, "?end@CCDirector@cocos2d@@QAEXXZ")),
+        reinterpret_cast< void ** >(&CCDirector_end_H),
+        reinterpret_cast< void ** >(&CCDirector_end));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xd4510),
+        reinterpret_cast< void ** >(&PauseLayer_init_hook),
+        reinterpret_cast< void ** >(&PauseLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xd61b0),
+        reinterpret_cast< void ** >(&PauseLayer_onEdit_H),
+        reinterpret_cast< void ** >(&PauseLayer_onEdit));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xd64c0),
+        reinterpret_cast< void * >(&PauseLayer_onQuit_H),
+        reinterpret_cast< void ** >(&PauseLayer_onQuit));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xf03f0),
+        reinterpret_cast< void ** >(&PlayLayer_resetLevel_H),
+        reinterpret_cast< void ** >(&PlayLayer_resetLevel));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xE1b10),
+        reinterpret_cast< void ** >(&PlayLayer_init_H),
+        reinterpret_cast< void ** >(&PlayLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xe78a0),
+        reinterpret_cast< void ** >(&PlayLayer_update_H),
+        reinterpret_cast< void ** >(&PlayLayer_update));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xf1e10),
+        reinterpret_cast< void ** >(&PlayLayer_resume_H),
+        reinterpret_cast< void ** >(&PlayLayer_resume));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xf1fe0),
+        reinterpret_cast< void * >(&PlayLayer_onQuit_H),
+        reinterpret_cast< void ** >(&PlayLayer_onQuit));
+    MH_CreateHook(
+       reinterpret_cast< void * >(gd::base+0x3f1e0),
+       reinterpret_cast< void ** >(&EditorPauseLayer_onExitEditor_H),
+       reinterpret_cast< void ** >(&EditorPauseLayer_onExitEditor));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x3ed20),
+        reinterpret_cast< void ** >(&EditorPauseLayer_saveLevel_H),
+        reinterpret_cast< void ** >(&EditorPauseLayer_saveLevel));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x3e150),
+        EditorPauseLayer::EditorPauseLayer_init_hook,
+        reinterpret_cast< void ** >(&EditorPauseLayer::EditorPauseLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0xae7a0), //0x1907b0 (original address) 0xae7a0
+        reinterpret_cast< void * >(&MenuLayer_init_H),
+        reinterpret_cast< void ** >(&MenuLayer_init)); // note the &, this gets the address of the variable
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x300f0),
+        reinterpret_cast< void ** >(&LevelCell_loadCustomLevelCell_H),
+        reinterpret_cast< void ** >(&LevelCell_loadCustomLevelCell));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x319f0),
+        reinterpret_cast< void ** >(&LevelCell_updateBGColor_H),
+        reinterpret_cast< void ** >(&LevelCell_updateBGColor));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x8b830),
+        reinterpret_cast< void ** >(&LevelEditorLayer_init_H),
+        reinterpret_cast< void ** >(&LevelEditorLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x90b80),
+        reinterpret_cast< void ** >(&LevelEditorLayer_update_H),
+        reinterpret_cast< void ** >(&LevelEditorLayer_update));
+
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x3fc00),
+        reinterpret_cast< void ** >(&EditorUI_init_H),
+        reinterpret_cast< void ** >(&EditorUI_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x3f9d0),
+        reinterpret_cast< void ** >(&EditorUI_dtor_H),
+        reinterpret_cast< void ** >(&EditorUI_dtor));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x3b320),
+        EditLevelLayer::EditLevelLayer_init_H,
+        reinterpret_cast< void ** >(&EditLevelLayer::EditLevelLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x835f0),
+        InfoLayer::InfoLayer_init_hook,
+        reinterpret_cast< void ** >(&InfoLayer::InfoLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x9b160),
+        LevelInfoLayer::LevelInfoLayer_init_hook,
+        reinterpret_cast< void ** >(&LevelInfoLayer::LevelInfoLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(gd::base+0x4ff10),
+        reinterpret_cast< void ** >(&EndLayer_init_H),
+        reinterpret_cast< void ** >(&EndLayer_init));
+    MH_CreateHook(
+        reinterpret_cast< void * >(cocosbase+0xffcc0),
+        reinterpret_cast< void ** >(&Scheduler_update_H),
+        reinterpret_cast< void ** >(&Scheduler_update));
+
 
     //MH_CreateHook(
     //    reinterpret_cast<void*>(GetProcAddress(cocos, "?init@CCDirector@cocos2d@@UAE_NXZ")),
     //    reinterpret_cast<void**>(&CCDirector_init_H),
     //    reinterpret_cast<void**>(&CCDirector_init));
 
-
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xd4510),
-        reinterpret_cast<void**>(&PauseLayer_init_hook),
-        reinterpret_cast<void**>(&PauseLayer_init));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xd61b0),
-        reinterpret_cast<void**>(&PauseLayer_onEdit_H),
-        reinterpret_cast<void**>(&PauseLayer_onEdit));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xd64c0),
-        reinterpret_cast<void*>(&PauseLayer_onQuit_H),
-        reinterpret_cast<void**>(&PauseLayer_onQuit));
-
-
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xf03f0),
-        reinterpret_cast<void**>(&PlayLayer_resetLevel_H),
-        reinterpret_cast<void**>(&PlayLayer_resetLevel));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xE1b10),
-        reinterpret_cast<void**>(&PlayLayer_init_H),
-        reinterpret_cast<void**>(&PlayLayer_init));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xe78a0),
-        reinterpret_cast<void**>(&PlayLayer_update_H),
-        reinterpret_cast<void**>(&PlayLayer_update));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xf1e10),
-        reinterpret_cast<void**>(&PlayLayer_resume_H),
-        reinterpret_cast<void**>(&PlayLayer_resume));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xf1fe0),
-        reinterpret_cast<void*>(&PlayLayer_onQuit_H),
-        reinterpret_cast<void**>(&PlayLayer_onQuit));
-
     //MH_CreateHook(
     //    reinterpret_cast< void * >(gd::base+0x48d40),
     //    reinterpret_cast< void * >(&EditorUI_onDuplicate_H),
     //    reinterpret_cast< void ** >(&EditorUI_onDuplicate));
-
-
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x3f1e0),
-        reinterpret_cast<void**>(&EditorPauseLayer_onExitEditor_H),
-        reinterpret_cast<void**>(&EditorPauseLayer_onExitEditor));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x3ed20),
-        reinterpret_cast<void**>(&EditorPauseLayer_saveLevel_H),
-        reinterpret_cast<void**>(&EditorPauseLayer_saveLevel));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x3e150),
-        EditorPauseLayer::EditorPauseLayer_init_hook,
-        reinterpret_cast<void**>(&EditorPauseLayer::EditorPauseLayer_init));
-
     /*
     MH_CreateHook(
         reinterpret_cast<void*>(gd::base + 0xd4510),
         PauseLayer::hook,
         reinterpret_cast<void**>(&PauseLayer::init));
     */
-
-
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0xae7a0), //0x1907b0 (original address) 0xae7a0
-        reinterpret_cast<void*>(&MenuLayer_init_H),
-        reinterpret_cast<void**>(&MenuLayer_init)); // note the &, this gets the address of the variable
-
-    MH_CreateHook(
-    reinterpret_cast< void * >(gd::base+0x300f0),
-    reinterpret_cast< void ** >(&LevelCell_init_H),
-    reinterpret_cast< void ** >(&LevelCell_init));
     
+    //MH_CreateHook(
+    //    reinterpret_cast< void * >(gd::base+0x300a0),
+    //    reinterpret_cast< void ** >(&LevelCell_loadFromLevel_H),
+    //    reinterpret_cast< void ** >(&LevelCell_loadFromLevel));
 
-    MH_CreateHook(
-        reinterpret_cast< void * >(gd::base+0x8b830),
-        reinterpret_cast< void ** >(&LevelEditorLayer_init_H),
-        reinterpret_cast< void ** >(&LevelEditorLayer_init));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x3fc00),
-        reinterpret_cast<void**>(&EditorUI_init_H),
-        reinterpret_cast<void**>(&EditorUI_init));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x3f9d0),
-        reinterpret_cast<void**>(&EditorUI_dtor_H),
-        reinterpret_cast<void**>(&EditorUI_dtor));
     //MH_CreateHook(
     //    reinterpret_cast< void * >(gd::base + 0x2d950),
     //    CustomizeObjectLayer::create_H,
@@ -1869,7 +1919,6 @@ DWORD WINAPI thread_func(void* hModule) {
     //    reinterpret_cast<void**>(&EditorUI_selectObjects_H),
     //    reinterpret_cast<void**>(&EditorUI_selectObjects));
 
-
     //MH_CreateHook(
     //    reinterpret_cast<void*>(gd::base + 0x3fc00),
     //    EditorPauseLayer::EditorUILayer_init_H,
@@ -1879,35 +1928,12 @@ DWORD WINAPI thread_func(void* hModule) {
     //    EditorPauseLayer::EditorUILayer_dtor_H,
     //    reinterpret_cast<void**>(&EditorPauseLayer::EditorUILayer_dtor));
 
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x3b320),
-        EditLevelLayer::EditLevelLayer_init_H,
-        reinterpret_cast<void**>(&EditLevelLayer::EditLevelLayer_init));
-    //base + 0x9e2b0
-
-
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x835f0),
-        InfoLayer::InfoLayer_init_hook,
-        reinterpret_cast<void**>(&InfoLayer::InfoLayer_init));
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x9b160),
-        LevelInfoLayer::LevelInfoLayer_init_hook,
-        reinterpret_cast<void**>(&LevelInfoLayer::LevelInfoLayer_init));
-
     //MH_CreateHook(
     //    reinterpret_cast<void*>(gd::base + 0x9e2b0),
     //    LevelInfoLayer::LevelInfoLayer_onLevelInfo_hook,
     //    reinterpret_cast<void**>(&LevelInfoLayer::LevelInfoLayer_onLevelInfo));
 
-    MH_CreateHook(
-        reinterpret_cast<void*>(gd::base + 0x4ff10),
-        reinterpret_cast<void**>(&EndLayer_init_H),
-        reinterpret_cast<void**>(&EndLayer_init));
-    MH_CreateHook(
-        reinterpret_cast<void*>(cocosbase + 0xffcc0),
-        reinterpret_cast<void**>(&Scheduler_update_H),
-        reinterpret_cast<void**>(&Scheduler_update));
+
 
     //0x47f520
 

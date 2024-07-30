@@ -1968,8 +1968,8 @@ void RenderMain() {
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
         {
             ImGui::SetWindowFontScale(setting().UISize);
-            ImGui::Text("Historical Hack V4.63");
-            ImGui::Text("Made by Taswert!");
+            ImGui::Text("Historical Hack V4.65");
+            ImGui::Text("Made by TASWERT ALLO!");
             ImGui::Text("Thanks to Rainix for GUI and other help!");
             ImGui::Text("Special thanks to mgostiH, Mat, Pololak,");
             ImGui::Text("HJfod, Absolute and GD Programming server!");

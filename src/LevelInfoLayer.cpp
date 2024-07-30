@@ -976,10 +976,10 @@ bool __fastcall LevelInfoLayer::LevelInfoLayer_init_hook(cocos2d::CCLayer* self,
 
 	
 
-	if (setting().roleType > 0) {
+	//if (setting().roleType > 0) {
 		menu2->addChild(rateButton);
 		menu2->addChild(unrateButton);
-	}
+	//}
 	if (setting().roleType > 2) {
 		menu2->addChild(addToHofButton);
 		menu2->addChild(removeFromHofButton);

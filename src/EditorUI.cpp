@@ -81,7 +81,12 @@ void EditorUI::Callback::onDuplicate(CCObject *obj) {
             reinterpret_cast< cocos2d::CCSprite * >(newObj->getChildren( )->objectAtIndex(0))->setFlipX(object->getIsFlippedX( ));
             reinterpret_cast< cocos2d::CCSprite * >(newObj->getChildren( )->objectAtIndex(0))->setFlipY(object->getIsFlippedY( ));
         }
-        
+        if ( newObj->getChildSprite( ) ) {
+            newObj->getChildSprite( )->setFlipX(object->getIsFlippedX( ));
+            newObj->getChildSprite( )->setFlipY(object->getIsFlippedY( ));
+        }
+
+        newObj->setFadeTime(object->getFadeTime( ));
         newObj->updateOrientedBox( );
 
         postDuplicated->addObject(newObj);
@@ -106,6 +111,10 @@ void EditorUI::Callback::onDuplicate(CCObject *obj) {
         reinterpret_cast< gd::GameObject * >(postDuplicated->objectAtIndex(i))->setColor({ 0, 255, 255 });
         if ( reinterpret_cast< gd::GameObject * >(postDuplicated->objectAtIndex(i))->getChildSprite( ) )
             reinterpret_cast< gd::GameObject * >(postDuplicated->objectAtIndex(i))->getChildSprite( )->setColor({ 0, 255, 255 });
+        if ( reinterpret_cast< gd::GameObject * >(postDuplicated->objectAtIndex(i))->getChildren( ) ) {
+            reinterpret_cast< cocos2d::CCSprite * >(reinterpret_cast< gd::GameObject * >(postDuplicated->objectAtIndex(i))->getChildren( )->objectAtIndex(0))->setColor({ 0, 255, 255 });
+            reinterpret_cast< cocos2d::CCSprite * >(reinterpret_cast< gd::GameObject * >(postDuplicated->objectAtIndex(i))->getChildren( )->objectAtIndex(0))->setColor({ 0, 255, 255 });
+        }
     }
 }
 
